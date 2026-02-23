@@ -1,0 +1,110 @@
+# BMAD Workflow: Feature Development
+# Adding new features to an existing project
+
+name: "feature-development"
+description: "End-to-end workflow for developing and shipping a new feature within an existing project"
+version: "1.0.0"
+
+stages:
+  - id: "analyze"
+    agent: "analyst"
+    model: "opus"
+    tasks:
+      - "feature-requirements"
+      - "impact-analysis"
+      - "feasibility-assessment"
+    outputs:
+      - "feature-brief.md"
+      - "impact-analysis.md"
+    handoff_to: "design"
+    description: >
+      Analyze the feature request against the existing product context.
+      Evaluate user needs, business value, and technical feasibility.
+      Identify potential conflicts with existing functionality.
+
+  - id: "design"
+    agent: "architect"
+    model: "opus"
+    depends_on: ["analyze"]
+    tasks:
+      - "feature-design"
+      - "api-changes"
+      - "data-model-changes"
+      - "integration-plan"
+    outputs:
+      - "feature-design.md"
+      - "api-changes.md"
+      - "migration-plan.md"
+    handoff_to: "implement"
+    description: >
+      Design the feature within the constraints of the existing architecture.
+      Define API changes, data model updates, and integration points.
+      Ensure backward compatibility and create a migration plan if needed.
+
+  - id: "implement"
+    agent: "developer"
+    model: "sonnet"
+    depends_on: ["design"]
+    tasks:
+      - "branch-creation"
+      - "implementation"
+      - "unit-testing"
+      - "integration-testing"
+      - "code-review-prep"
+    outputs:
+      - "implementation-notes.md"
+      - "changelog-entry.md"
+    handoff_to: "test"
+    description: >
+      Implement the feature following the design specification.
+      Write unit and integration tests alongside the implementation.
+      Prepare the code for review with clear commit messages.
+
+  - id: "test"
+    agent: "tester"
+    model: "sonnet"
+    depends_on: ["implement"]
+    tasks:
+      - "test-plan-creation"
+      - "functional-testing"
+      - "regression-testing"
+      - "edge-case-testing"
+      - "performance-testing"
+    outputs:
+      - "test-plan.md"
+      - "test-results.md"
+      - "performance-report.md"
+    handoff_to: "deploy"
+    description: >
+      Create and execute a comprehensive test plan for the new feature.
+      Verify all acceptance criteria are met.
+      Run regression tests to ensure existing functionality is preserved.
+      Validate performance meets defined thresholds.
+
+  - id: "deploy"
+    agent: "developer"
+    model: "sonnet"
+    depends_on: ["test"]
+    tasks:
+      - "merge-preparation"
+      - "deployment-checklist"
+      - "feature-flag-setup"
+      - "monitoring-setup"
+      - "release-notes"
+    outputs:
+      - "deployment-checklist.md"
+      - "release-notes.md"
+    handoff_to: null
+    description: >
+      Prepare the feature for deployment including merge, feature flags,
+      monitoring configuration, and release documentation.
+      Coordinate with scrum master for release scheduling.
+
+rollback:
+  description: "Steps to rollback if deployment fails"
+  steps:
+    - "Disable feature flag"
+    - "Revert database migrations if applicable"
+    - "Redeploy previous version"
+    - "Notify stakeholders of rollback"
+    - "Create incident report"

@@ -1,0 +1,120 @@
+# OpenClaw Multi-Agent Gateway Configuration
+# AI Agent Team with BMAD Workflows
+
+gateway:
+  host: "127.0.0.1"
+  port: 18789
+  log_level: "info"
+
+providers:
+  anthropic:
+    api: "anthropic-messages"
+    env: "ANTHROPIC_API_KEY"
+    models:
+      - "claude-opus-4-6"
+      - "claude-sonnet-4-6"
+
+agents:
+  defaults:
+    memory:
+      backend: "qmd"
+      qmd:
+        paths:
+          - "./workspace/memory"
+        sessions:
+          enabled: true
+        interval: 300
+      temporalDecay:
+        enabled: true
+      mmrDedup:
+        enabled: true
+    tools:
+      sessions_list: true
+      sessions_history: true
+      sessions_send: true
+      browser: false
+      canvas: false
+
+  list:
+    - id: "analyst"
+      name: "Business Analyst"
+      default: true
+      model: "anthropic/claude-opus-4-6"
+      workspace: "./agents/analyst"
+      agentDir: "~/.openclaw/agents/analyst"
+      description: "Analyzes business requirements, creates project briefs, and performs market research"
+
+    - id: "pm"
+      name: "Product Manager"
+      model: "anthropic/claude-sonnet-4-6"
+      workspace: "./agents/pm"
+      agentDir: "~/.openclaw/agents/pm"
+      description: "Creates PRDs, manages product roadmap, and coordinates team priorities"
+
+    - id: "architect"
+      name: "Solutions Architect"
+      model: "anthropic/claude-opus-4-6"
+      workspace: "./agents/architect"
+      agentDir: "~/.openclaw/agents/architect"
+      description: "Designs system architecture, makes technology decisions, and creates technical specs"
+
+    - id: "developer"
+      name: "Senior Developer"
+      model: "anthropic/claude-sonnet-4-6"
+      workspace: "./agents/developer"
+      agentDir: "~/.openclaw/agents/developer"
+      description: "Implements features, writes code, and handles technical implementation"
+
+    - id: "tester"
+      name: "QA Engineer"
+      model: "anthropic/claude-sonnet-4-6"
+      workspace: "./agents/tester"
+      agentDir: "~/.openclaw/agents/tester"
+      description: "Creates test plans, runs tests, and validates quality"
+
+    - id: "scrum-master"
+      name: "Scrum Master"
+      model: "anthropic/claude-sonnet-4-6"
+      workspace: "./agents/scrum-master"
+      agentDir: "~/.openclaw/agents/scrum-master"
+      description: "Facilitates sprints, tracks progress, manages kanban board, and removes blockers"
+
+channels:
+  telegram:
+    enabled: true
+    botToken: "${TELEGRAM_BOT_TOKEN}"
+    dmPolicy: "pairing"
+    groupPolicy: "allowlist"
+    streamMode: true
+
+  slack:
+    enabled: true
+    botToken: "${SLACK_BOT_TOKEN}"
+    appToken: "${SLACK_APP_TOKEN}"
+    mode: "socket"
+    groupPolicy: "allowlist"
+
+  voice:
+    enabled: true
+    provider: "elevenlabs"
+    apiKey: "${ELEVENLABS_API_KEY}"
+    model: "eleven_multilingual_v2"
+    voice: "rachel"
+
+bindings:
+  # Telegram routing - use command prefixes
+  - match:
+      channel: "telegram"
+      peer: "${ADMIN_TELEGRAM_ID}"
+    agent: "analyst"
+
+  # Slack routing - workspace channels
+  - match:
+      channel: "slack"
+      guildId: "${SLACK_WORKSPACE_ID}"
+    agent: "scrum-master"
+
+  # Default fallback
+  - match:
+      channel: "*"
+    agent: "analyst"

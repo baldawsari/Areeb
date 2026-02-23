@@ -1,0 +1,49 @@
+# BMAD Workflow: Bug Fix
+# Triage, fix, and verification workflow for reported bugs
+
+name: "bug-fix"
+description: "Bug triage, fix, and verification workflow"
+version: "1.0.0"
+
+stages:
+  - id: "triage"
+    agent: "tester"
+    model: "sonnet"
+    tasks:
+      - "bug-reproduction"
+      - "severity-assessment"
+    outputs:
+      - "bug-report.md"
+    handoff_to: "fix"
+
+  - id: "fix"
+    agent: "developer"
+    model: "sonnet"
+    depends_on: ["triage"]
+    tasks:
+      - "root-cause-analysis"
+      - "fix-implementation"
+    outputs:
+      - "fix-notes.md"
+    handoff_to: "verification"
+
+  - id: "verification"
+    agent: "tester"
+    model: "sonnet"
+    depends_on: ["fix"]
+    tasks:
+      - "fix-verification"
+      - "regression-testing"
+    outputs:
+      - "verification-report.md"
+    handoff_to: "close"
+
+  - id: "close"
+    agent: "scrum-master"
+    model: "sonnet"
+    depends_on: ["verification"]
+    tasks:
+      - "update-kanban"
+      - "notify-stakeholders"
+    outputs:
+      - "closure-report.md"

@@ -1,0 +1,118 @@
+# BMAD Task: Test Plan Creation
+# Tester creates a comprehensive test plan for the project or feature
+
+name: "test-plan-creation"
+agent: "tester"
+description: "Create a comprehensive test plan covering functional, non-functional, and regression testing"
+model_preference: "sonnet"
+
+inputs:
+  - "prd.md"
+  - "architecture.md"
+  - "user-stories.md"
+  - "api-design.md"
+  - "implementation-notes.md"
+
+steps:
+  - id: "analyze-testable-requirements"
+    action: "Extract testable requirements from the PRD and user stories"
+    output: "Testable requirements matrix"
+    details: >
+      Review the PRD and user stories to identify all testable requirements.
+      Map each requirement to its acceptance criteria. Flag any requirements
+      that lack clear, testable acceptance criteria for clarification.
+
+  - id: "define-test-strategy"
+    action: "Define the overall testing strategy and approach"
+    output: "Test strategy document"
+    details: >
+      Determine the testing levels (unit, integration, system, acceptance),
+      testing types (functional, performance, security, usability), and the
+      approach for each. Define the test environment requirements, test data
+      strategy, and tool selection.
+
+  - id: "design-functional-tests"
+    action: "Design functional test cases for all user stories and acceptance criteria"
+    output: "Functional test cases"
+    details: >
+      Write detailed test cases for each user story covering the happy path,
+      alternative flows, and error scenarios. Each test case must have clear
+      preconditions, steps, expected results, and postconditions. Use
+      equivalence partitioning and boundary value analysis techniques.
+
+  - id: "design-api-tests"
+    action: "Design API test cases based on the API design specification"
+    output: "API test cases"
+    details: >
+      Create test cases for each API endpoint covering valid requests,
+      invalid requests, authentication/authorization, rate limiting,
+      error responses, and edge cases. Verify response schemas,
+      status codes, and headers.
+
+  - id: "design-integration-tests"
+    action: "Design integration test scenarios for component interactions"
+    output: "Integration test scenarios"
+    details: >
+      Identify critical integration points between components. Design
+      test scenarios that verify data flows correctly across component
+      boundaries, database transactions are consistent, and external
+      service integrations handle failures gracefully.
+
+  - id: "design-performance-tests"
+    action: "Design performance test scenarios with measurable targets"
+    output: "Performance test plan"
+    details: >
+      Define load testing scenarios based on expected usage patterns.
+      Set measurable targets for response time, throughput, and resource
+      utilization. Design stress tests to identify breaking points and
+      endurance tests to detect memory leaks or degradation over time.
+
+  - id: "design-security-tests"
+    action: "Design security test cases based on the security architecture"
+    output: "Security test cases"
+    details: >
+      Create test cases for authentication bypasses, authorization flaws,
+      injection attacks (SQL, XSS, CSRF), sensitive data exposure, and
+      session management. Reference OWASP Top 10 for coverage.
+
+  - id: "define-regression-suite"
+    action: "Define the regression test suite for ongoing quality assurance"
+    output: "Regression test suite specification"
+    details: >
+      Select a subset of test cases that form the regression suite.
+      Prioritize tests that cover critical business flows, previously
+      found bugs, and high-risk areas. Define execution frequency
+      and automation candidates.
+
+  - id: "define-test-environment"
+    action: "Specify test environment, test data, and tooling requirements"
+    output: "Test environment specification"
+    details: >
+      Document the required test environment configuration, test data
+      setup and teardown procedures, and any required tooling or
+      infrastructure. Define how test environments will be provisioned
+      and maintained.
+
+  - id: "assemble-test-plan"
+    action: "Compile the complete test plan document"
+    output: "test-plan.md"
+    details: >
+      Assemble all sections into the test plan template. Include
+      traceability matrix linking test cases to requirements.
+      Define entry criteria, exit criteria, and suspension/resumption criteria.
+
+checklist:
+  - "All functional requirements have corresponding test cases"
+  - "Acceptance criteria are covered by at least one test case"
+  - "Happy path, alternative flows, and error scenarios are tested"
+  - "API endpoints have comprehensive test coverage"
+  - "Integration points between components are tested"
+  - "Performance targets have corresponding test scenarios"
+  - "Security test cases cover OWASP Top 10"
+  - "Regression suite is defined and prioritized"
+  - "Test data strategy is documented"
+  - "Test environment requirements are specified"
+  - "Entry and exit criteria are defined"
+  - "Traceability matrix links tests to requirements"
+  - "Test automation candidates are identified"
+  - "Risk-based test prioritization is applied"

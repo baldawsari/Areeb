@@ -1,0 +1,18 @@
+{
+  "name": "ai-agent-team",
+  "version": "1.0.0",
+  "description": "AI Agent Team - BMAD Method + OpenClaw Orchestration with Kanban Dashboard",
+  "private": true,
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "init-agents": "bash scripts/init-agents.sh",
+    "dev": "bash scripts/start-dev.sh",
+    "dashboard": "cd dashboard && npm run dev",
+    "build": "cd dashboard && npm run build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "keywords": ["ai-agents", "bmad", "openclaw", "kanban", "multi-agent"],
+  "license": "MIT"
+}

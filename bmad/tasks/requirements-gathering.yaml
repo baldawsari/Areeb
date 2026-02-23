@@ -1,0 +1,28 @@
+# BMAD Task: Requirements Gathering
+# Analyst gathers and documents project requirements
+
+name: "requirements-gathering"
+agent: "analyst"
+description: "Gather and document project requirements"
+model_preference: "opus"
+
+steps:
+  - id: "understand"
+    action: "Analyze the project request and identify key requirements"
+    output: "Initial requirements list"
+  - id: "research"
+    action: "Research similar solutions and best practices"
+    output: "Research findings"
+  - id: "clarify"
+    action: "Identify ambiguities and prepare clarification questions"
+    output: "Questions for stakeholders"
+  - id: "document"
+    action: "Create structured requirements document"
+    output: "requirements.md"
+
+checklist:
+  - "All functional requirements identified"
+  - "Non-functional requirements documented"
+  - "Success criteria defined"
+  - "Constraints and assumptions listed"
+  - "Dependencies mapped"

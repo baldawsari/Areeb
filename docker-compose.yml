@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  openclaw-gateway:
+    image: node:22-slim
+    container_name: agent-team-gateway
+    working_dir: /app
+    volumes:
+      - ./openclaw:/app
+      - openclaw-data:/root/.openclaw
+    ports:
+      - "18789:18789"
+    env_file:
+      - ./openclaw/.env
+    command: >
+      sh -c "npm install -g openclaw@latest &&
+             openclaw gateway start"
+    restart: unless-stopped
+    networks:
+      - agent-network
+
+  dashboard:
+    image: node:22-slim
+    container_name: agent-team-dashboard
+    working_dir: /app
+    volumes:
+      - ./dashboard:/app
+    ports:
+      - "3000:3000"
+    command: >
+      sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3000"
+    restart: unless-stopped
+    depends_on:
+      - openclaw-gateway
+    networks:
+      - agent-network
+
+  qmd:
+    image: oven/bun:latest
+    container_name: agent-team-qmd
+    working_dir: /app
+    volumes:
+      - openclaw-data:/root/.openclaw
+      - qmd-models:/root/.qmd
+    command: >
+      sh -c "bunx qmd serve --port 9876"
+    ports:
+      - "9876:9876"
+    restart: unless-stopped
+    networks:
+      - agent-network
+
+volumes:
+  openclaw-data:
+  qmd-models:
+
+networks:
+  agent-network:
+    driver: bridge

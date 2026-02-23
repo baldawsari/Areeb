@@ -1,0 +1,147 @@
+# BMAD Checklist: Sprint Review
+# Checklist for conducting an effective sprint review ceremony
+
+name: "sprint-review"
+description: "Comprehensive checklist for sprint review ceremony preparation and execution"
+version: "1.0.0"
+applies_to: "scrum-master"
+workflow_reference: "project-kickoff"
+stage_reference: "review"
+
+preparation:
+  - id: "sr-prep-01"
+    item: "Sprint goal and objectives documented"
+    responsible: "scrum-master"
+    required: true
+  - id: "sr-prep-02"
+    item: "List of completed user stories compiled"
+    responsible: "scrum-master"
+    required: true
+  - id: "sr-prep-03"
+    item: "List of incomplete or carried-over stories documented with reasons"
+    responsible: "scrum-master"
+    required: true
+  - id: "sr-prep-04"
+    item: "Demo environment prepared and verified"
+    responsible: "developer"
+    required: true
+  - id: "sr-prep-05"
+    item: "Demo script or walkthrough plan created"
+    responsible: "developer"
+    required: true
+  - id: "sr-prep-06"
+    item: "Sprint metrics collected (velocity, burndown, cycle time)"
+    responsible: "scrum-master"
+    required: true
+  - id: "sr-prep-07"
+    item: "Stakeholder notifications sent with agenda"
+    responsible: "scrum-master"
+    required: true
+  - id: "sr-prep-08"
+    item: "Test results and quality metrics summarized"
+    responsible: "tester"
+    required: true
+
+sprint_goal_review:
+  - id: "sr-goal-01"
+    item: "Sprint goal stated and reviewed"
+    required: true
+  - id: "sr-goal-02"
+    item: "Goal achievement status assessed (Met / Partially Met / Not Met)"
+    required: true
+  - id: "sr-goal-03"
+    item: "Reasons for any goal deviation documented"
+    required: true
+
+completed_work:
+  - id: "sr-work-01"
+    item: "Each completed story demonstrated with working software"
+    required: true
+  - id: "sr-work-02"
+    item: "Acceptance criteria verified for each completed story"
+    required: true
+  - id: "sr-work-03"
+    item: "Definition of Done met for all completed stories"
+    required: true
+  - id: "sr-work-04"
+    item: "Any deviations from original requirements explained"
+    required: true
+
+incomplete_work:
+  - id: "sr-inc-01"
+    item: "Incomplete stories listed with current status"
+    required: true
+  - id: "sr-inc-02"
+    item: "Blockers and impediments that caused incompletion documented"
+    required: true
+  - id: "sr-inc-03"
+    item: "Remaining effort estimated for carried-over items"
+    required: true
+  - id: "sr-inc-04"
+    item: "Decision made on each incomplete item (carry over, split, drop)"
+    required: true
+
+metrics_and_quality:
+  - id: "sr-met-01"
+    item: "Sprint velocity calculated and compared to previous sprints"
+    required: true
+  - id: "sr-met-02"
+    item: "Burndown chart reviewed"
+    required: true
+  - id: "sr-met-03"
+    item: "Defect count and severity distribution reported"
+    required: true
+  - id: "sr-met-04"
+    item: "Test coverage and pass rate reported"
+    required: true
+  - id: "sr-met-05"
+    item: "Technical debt assessment provided"
+    required: false
+  - id: "sr-met-06"
+    item: "Performance metrics within acceptable ranges"
+    required: false
+
+stakeholder_feedback:
+  - id: "sr-fb-01"
+    item: "Stakeholder feedback collected on demonstrated features"
+    required: true
+  - id: "sr-fb-02"
+    item: "New requirements or change requests documented"
+    required: true
+  - id: "sr-fb-03"
+    item: "Priority adjustments discussed and agreed upon"
+    required: true
+  - id: "sr-fb-04"
+    item: "Market or business context changes noted"
+    required: false
+
+backlog_update:
+  - id: "sr-bl-01"
+    item: "Product backlog updated based on review feedback"
+    required: true
+  - id: "sr-bl-02"
+    item: "New items added to backlog with initial priority"
+    required: true
+  - id: "sr-bl-03"
+    item: "Backlog re-prioritized for next sprint"
+    required: true
+  - id: "sr-bl-04"
+    item: "Upcoming sprint goal discussed and tentatively agreed"
+    required: true
+
+post_review:
+  - id: "sr-post-01"
+    item: "Sprint review summary document created"
+    required: true
+  - id: "sr-post-02"
+    item: "Action items assigned with owners and due dates"
+    required: true
+  - id: "sr-post-03"
+    item: "Review notes distributed to all participants"
+    required: true
+  - id: "sr-post-04"
+    item: "Kanban board updated to reflect review outcomes"
+    required: true
+  - id: "sr-post-05"
+    item: "Retrospective scheduled as follow-up"
+    required: true

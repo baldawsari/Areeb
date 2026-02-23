@@ -1,0 +1,104 @@
+# BMAD Task: Implementation
+# Developer implements features based on architecture and sprint backlog
+
+name: "implementation"
+agent: "developer"
+description: "Implement features and functionality according to the architecture design and sprint backlog"
+model_preference: "sonnet"
+
+inputs:
+  - "architecture.md"
+  - "sprint-backlog.md"
+  - "prd.md"
+  - "api-design.md"
+  - "tech-stack.md"
+
+steps:
+  - id: "review-specifications"
+    action: "Review the architecture document, API design, and assigned sprint backlog items"
+    output: "Implementation plan with task sequencing"
+    details: >
+      Thoroughly understand the architecture, data model, and API contracts
+      before writing any code. Identify the order of implementation based
+      on dependencies between components.
+
+  - id: "setup-environment"
+    action: "Set up or verify the development environment and project scaffolding"
+    output: "Working development environment"
+    details: >
+      Ensure the development environment matches the tech stack specification.
+      Initialize project structure, install dependencies, configure linting,
+      formatting, and pre-commit hooks. Verify the build pipeline works.
+
+  - id: "implement-data-layer"
+    action: "Implement data models, database schemas, and data access layer"
+    output: "Data layer implementation"
+    details: >
+      Create database schemas, migrations, ORM models, and repository patterns.
+      Implement data validation, serialization, and any caching logic.
+      Write unit tests for data access methods.
+
+  - id: "implement-business-logic"
+    action: "Implement core business logic and service layer"
+    output: "Business logic implementation"
+    details: >
+      Build the service layer containing business rules, validation logic,
+      and orchestration. Ensure separation of concerns between business
+      logic and data access. Write comprehensive unit tests for all business rules.
+
+  - id: "implement-api"
+    action: "Implement API endpoints following the API design specification"
+    output: "API implementation"
+    details: >
+      Build API endpoints matching the contracts defined in api-design.md.
+      Implement request validation, error handling, authentication middleware,
+      and response formatting. Write integration tests for each endpoint.
+
+  - id: "implement-ui"
+    action: "Implement user interface components if applicable"
+    output: "UI implementation"
+    details: >
+      Build frontend components following the UI flow descriptions from the PRD.
+      Implement state management, API integration, error handling, and loading
+      states. Write component tests and ensure accessibility compliance.
+
+  - id: "write-tests"
+    action: "Ensure comprehensive test coverage across all layers"
+    output: "Test suite"
+    details: >
+      Verify unit test coverage meets the minimum threshold (>80%).
+      Write integration tests for critical user journeys. Add edge case
+      tests for error handling and boundary conditions. Ensure all tests
+      pass consistently.
+
+  - id: "code-quality-check"
+    action: "Run linting, formatting, and static analysis tools"
+    output: "Clean code report"
+    details: >
+      Run the full linting suite, static analysis, and type checking.
+      Fix all warnings and errors. Ensure code follows the project's
+      style guide and naming conventions.
+
+  - id: "document-implementation"
+    action: "Write implementation notes and update technical documentation"
+    output: "implementation-notes.md"
+    details: >
+      Document any deviations from the architecture, important implementation
+      decisions, known limitations, and areas for future improvement.
+      Update API documentation and README if applicable.
+
+checklist:
+  - "All sprint backlog items implemented"
+  - "Code follows architecture patterns and conventions"
+  - "API contracts match the design specification"
+  - "Unit test coverage exceeds 80%"
+  - "Integration tests cover critical paths"
+  - "All tests pass consistently"
+  - "No linting or type-checking errors"
+  - "Error handling is comprehensive and consistent"
+  - "Logging and observability hooks are in place"
+  - "No hardcoded secrets, credentials, or environment-specific values"
+  - "Database migrations are reversible"
+  - "Code is reviewed via self-review before submitting for team review"
+  - "Implementation notes document any deviations from design"
+  - "Performance-sensitive code has been profiled"
