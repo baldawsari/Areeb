@@ -1,0 +1,94 @@
+# BMAD Workflow: Project Kickoff
+# Orchestrates new project from brief to sprint-ready
+
+name: "project-kickoff"
+description: "End-to-end workflow from project idea to sprint-ready backlog"
+version: "1.0.0"
+
+stages:
+  - id: "discovery"
+    agent: "analyst"
+    model: "opus"
+    tasks:
+      - "requirements-gathering"
+      - "market-research"
+      - "project-brief"
+    outputs:
+      - "project-brief.md"
+      - "market-analysis.md"
+    handoff_to: "requirements-definition"
+
+  - id: "requirements-definition"
+    agent: "pm"
+    model: "sonnet"
+    depends_on: ["discovery"]
+    tasks:
+      - "prd-creation"
+      - "user-story-mapping"
+      - "backlog-creation"
+    outputs:
+      - "prd.md"
+      - "user-stories.md"
+      - "product-backlog.md"
+    handoff_to: "architecture"
+
+  - id: "architecture"
+    agent: "architect"
+    model: "opus"
+    depends_on: ["requirements-definition"]
+    tasks:
+      - "system-design"
+      - "tech-stack-selection"
+      - "architecture-doc"
+    outputs:
+      - "architecture.md"
+      - "tech-stack.md"
+      - "api-design.md"
+    handoff_to: "sprint-planning"
+
+  - id: "sprint-planning"
+    agent: "scrum-master"
+    model: "sonnet"
+    depends_on: ["architecture"]
+    tasks:
+      - "sprint-backlog"
+      - "task-breakdown"
+      - "capacity-planning"
+    outputs:
+      - "sprint-backlog.md"
+      - "kanban-board-init.json"
+    handoff_to: "development"
+
+  - id: "development"
+    agent: "developer"
+    model: "sonnet"
+    depends_on: ["sprint-planning"]
+    tasks:
+      - "implementation"
+      - "code-review-prep"
+    outputs:
+      - "implementation-notes.md"
+    handoff_to: "testing"
+
+  - id: "testing"
+    agent: "tester"
+    model: "sonnet"
+    depends_on: ["development"]
+    tasks:
+      - "test-plan-creation"
+      - "test-execution"
+      - "bug-reporting"
+    outputs:
+      - "test-plan.md"
+      - "test-results.md"
+    handoff_to: "review"
+
+  - id: "review"
+    agent: "scrum-master"
+    model: "sonnet"
+    depends_on: ["testing"]
+    tasks:
+      - "sprint-review"
+      - "retrospective"
+    outputs:
+      - "sprint-review.md"

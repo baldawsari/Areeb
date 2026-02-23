@@ -1,0 +1,78 @@
+# BMAD Task: PRD Creation
+# Product Manager creates a Product Requirements Document
+
+name: "prd-creation"
+agent: "pm"
+description: "Create a comprehensive Product Requirements Document from gathered requirements"
+model_preference: "sonnet"
+
+inputs:
+  - "project-brief.md"
+  - "requirements.md"
+  - "market-analysis.md"
+
+steps:
+  - id: "review-inputs"
+    action: "Review the project brief, requirements, and market analysis documents"
+    output: "Input summary and gap analysis"
+    details: >
+      Thoroughly read all input documents. Identify any gaps, contradictions,
+      or areas that need further clarification before the PRD can be written.
+
+  - id: "define-scope"
+    action: "Define the product scope, including in-scope and out-of-scope items"
+    output: "Scope definition"
+    details: >
+      Clearly delineate what the product will and will not do in this version.
+      Establish boundaries to prevent scope creep during development.
+
+  - id: "write-user-stories"
+    action: "Translate requirements into user stories with acceptance criteria"
+    output: "User stories with acceptance criteria"
+    details: >
+      Write user stories in the format: As a [user type], I want [action]
+      so that [benefit]. Each story must have testable acceptance criteria.
+
+  - id: "define-priorities"
+    action: "Prioritize features using MoSCoW method (Must, Should, Could, Won't)"
+    output: "Prioritized feature list"
+    details: >
+      Assign each feature a priority level. Must-haves are required for launch.
+      Should-haves are important but not critical. Could-haves are nice to have.
+      Won't-haves are explicitly excluded from this version.
+
+  - id: "specify-nfrs"
+    action: "Document non-functional requirements (performance, security, scalability)"
+    output: "Non-functional requirements specification"
+    details: >
+      Define measurable targets for performance (response times, throughput),
+      security (authentication, authorization, data protection), scalability
+      (concurrent users, data volume), and reliability (uptime, recovery).
+
+  - id: "create-wireframes"
+    action: "Create low-fidelity wireframes or UI flow descriptions"
+    output: "UI flow descriptions"
+    details: >
+      Describe the key user interface flows and screen layouts. Focus on
+      information architecture and user journey rather than visual design.
+
+  - id: "assemble-prd"
+    action: "Compile all sections into the final PRD document"
+    output: "prd.md"
+    details: >
+      Assemble the complete PRD using the standard template. Ensure all
+      sections are complete, consistent, and cross-referenced.
+
+checklist:
+  - "Executive summary is clear and concise"
+  - "Product vision and goals are stated"
+  - "Target audience is defined"
+  - "All user stories have acceptance criteria"
+  - "Features are prioritized (MoSCoW)"
+  - "Non-functional requirements have measurable targets"
+  - "Success metrics are defined and measurable"
+  - "Timeline and milestones are realistic"
+  - "Risks and mitigations are documented"
+  - "Dependencies on external systems are identified"
+  - "Data requirements and privacy considerations included"
+  - "PRD reviewed against project brief for completeness"

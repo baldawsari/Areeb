@@ -1,0 +1,99 @@
+# BMAD Task: System Design
+# Architect designs the system architecture
+
+name: "system-design"
+agent: "architect"
+description: "Design the system architecture based on the PRD and requirements"
+model_preference: "opus"
+
+inputs:
+  - "prd.md"
+  - "requirements.md"
+  - "project-brief.md"
+
+steps:
+  - id: "analyze-requirements"
+    action: "Analyze functional and non-functional requirements for architectural implications"
+    output: "Architectural requirements analysis"
+    details: >
+      Extract architecturally significant requirements from the PRD.
+      Identify quality attributes (performance, scalability, security,
+      maintainability) and their quantitative targets.
+
+  - id: "define-high-level-architecture"
+    action: "Define the high-level system architecture and component boundaries"
+    output: "High-level architecture diagram description"
+    details: >
+      Choose the architectural style (monolith, microservices, serverless, hybrid).
+      Define major components, their responsibilities, and communication patterns.
+      Establish system boundaries and external integration points.
+
+  - id: "select-tech-stack"
+    action: "Select and justify the technology stack for each component"
+    output: "tech-stack.md"
+    details: >
+      Choose programming languages, frameworks, databases, message queues,
+      caching layers, and infrastructure. Justify each choice against
+      requirements, team expertise, and long-term maintainability.
+
+  - id: "design-data-model"
+    action: "Design the data model, storage strategy, and data flow"
+    output: "Data model specification"
+    details: >
+      Define entities, relationships, and data storage strategy.
+      Design for data consistency, partitioning, and replication if needed.
+      Document data flow between components.
+
+  - id: "design-api"
+    action: "Design the API contracts and communication protocols"
+    output: "api-design.md"
+    details: >
+      Define REST/GraphQL/gRPC endpoints, request/response schemas,
+      authentication mechanisms, rate limiting, and versioning strategy.
+      Document error handling conventions.
+
+  - id: "design-security"
+    action: "Design the security architecture and threat model"
+    output: "Security architecture section"
+    details: >
+      Define authentication and authorization strategy, data encryption
+      (at rest and in transit), secret management, input validation,
+      and audit logging. Perform a basic threat model (STRIDE).
+
+  - id: "design-infrastructure"
+    action: "Design the deployment architecture and infrastructure"
+    output: "Infrastructure architecture section"
+    details: >
+      Define the deployment topology (cloud provider, regions, availability zones).
+      Design CI/CD pipeline, container orchestration, monitoring,
+      alerting, and logging infrastructure.
+
+  - id: "document-decisions"
+    action: "Document architectural decisions as ADRs (Architecture Decision Records)"
+    output: "Architectural decision records"
+    details: >
+      For each significant decision, document the context, options considered,
+      decision made, and rationale. This provides future developers with
+      the reasoning behind architectural choices.
+
+  - id: "assemble-architecture-doc"
+    action: "Compile the complete architecture document"
+    output: "architecture.md"
+    details: >
+      Assemble all sections into the architecture document template.
+      Include diagrams, decision records, and cross-references to the PRD.
+
+checklist:
+  - "Architecture addresses all quality attribute requirements"
+  - "Component boundaries are well-defined with clear interfaces"
+  - "Technology choices are justified and consistent"
+  - "Data model supports all identified use cases"
+  - "API design follows REST/GraphQL best practices"
+  - "Security architecture covers authentication, authorization, and data protection"
+  - "Deployment architecture supports scalability requirements"
+  - "Failure modes and recovery strategies are documented"
+  - "Architectural decisions are recorded with rationale"
+  - "Monitoring and observability strategy is defined"
+  - "Migration path from current state is clear (if applicable)"
+  - "Cost estimation for infrastructure is provided"
+  - "Architecture reviewed against PRD for completeness"

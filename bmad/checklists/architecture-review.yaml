@@ -1,0 +1,250 @@
+# BMAD Checklist: Architecture Review
+# Checklist for reviewing architecture documents and architectural changes
+
+name: "architecture-review"
+description: "Comprehensive checklist for reviewing system architecture design and changes"
+version: "1.0.0"
+applies_to: "architect"
+workflow_reference: "code-review"
+stage_reference: "architecture-review"
+
+requirements_alignment:
+  - id: "ar-req-01"
+    item: "Architecture addresses all functional requirements from the PRD"
+    required: true
+  - id: "ar-req-02"
+    item: "Non-functional requirements have corresponding architectural decisions"
+    required: true
+  - id: "ar-req-03"
+    item: "Quality attribute targets are achievable with the chosen architecture"
+    required: true
+  - id: "ar-req-04"
+    item: "Constraints from the project brief are respected"
+    required: true
+  - id: "ar-req-05"
+    item: "Edge cases and failure scenarios are accounted for"
+    required: true
+
+design_principles:
+  - id: "ar-dp-01"
+    item: "Single Responsibility Principle applied to components"
+    required: true
+  - id: "ar-dp-02"
+    item: "Loose coupling between components"
+    required: true
+  - id: "ar-dp-03"
+    item: "High cohesion within components"
+    required: true
+  - id: "ar-dp-04"
+    item: "Appropriate separation of concerns across layers"
+    required: true
+  - id: "ar-dp-05"
+    item: "DRY principle followed (no unnecessary duplication)"
+    required: true
+  - id: "ar-dp-06"
+    item: "YAGNI principle applied (no over-engineering)"
+    required: true
+  - id: "ar-dp-07"
+    item: "Design patterns used appropriately and documented"
+    required: false
+
+component_design:
+  - id: "ar-comp-01"
+    item: "Component boundaries are clearly defined"
+    required: true
+  - id: "ar-comp-02"
+    item: "Component responsibilities are well-scoped and non-overlapping"
+    required: true
+  - id: "ar-comp-03"
+    item: "Interfaces between components are well-defined"
+    required: true
+  - id: "ar-comp-04"
+    item: "Component dependencies are explicit and minimized"
+    required: true
+  - id: "ar-comp-05"
+    item: "No circular dependencies exist between components"
+    required: true
+  - id: "ar-comp-06"
+    item: "Each component can be tested independently"
+    required: true
+
+data_architecture:
+  - id: "ar-data-01"
+    item: "Data model supports all identified use cases"
+    required: true
+  - id: "ar-data-02"
+    item: "Data storage choices are appropriate for the data types and access patterns"
+    required: true
+  - id: "ar-data-03"
+    item: "Data consistency model is defined (strong vs eventual)"
+    required: true
+  - id: "ar-data-04"
+    item: "Data migration strategy is documented if applicable"
+    required: false
+  - id: "ar-data-05"
+    item: "Data retention and archival policies are defined"
+    required: false
+  - id: "ar-data-06"
+    item: "Database indexing strategy supports query patterns"
+    required: true
+  - id: "ar-data-07"
+    item: "Data backup and recovery procedures are specified"
+    required: true
+
+api_design:
+  - id: "ar-api-01"
+    item: "API follows RESTful conventions or chosen protocol standards"
+    required: true
+  - id: "ar-api-02"
+    item: "API versioning strategy is defined"
+    required: true
+  - id: "ar-api-03"
+    item: "Request and response schemas are documented"
+    required: true
+  - id: "ar-api-04"
+    item: "Error response format is consistent and informative"
+    required: true
+  - id: "ar-api-05"
+    item: "Rate limiting and throttling are specified"
+    required: true
+  - id: "ar-api-06"
+    item: "Pagination strategy is defined for list endpoints"
+    required: true
+  - id: "ar-api-07"
+    item: "API authentication and authorization mechanisms are specified"
+    required: true
+
+security:
+  - id: "ar-sec-01"
+    item: "Authentication mechanism is appropriate and industry-standard"
+    required: true
+  - id: "ar-sec-02"
+    item: "Authorization model enforces least-privilege access"
+    required: true
+  - id: "ar-sec-03"
+    item: "Data encryption specified for at-rest and in-transit"
+    required: true
+  - id: "ar-sec-04"
+    item: "Secret management approach is defined (no hardcoded secrets)"
+    required: true
+  - id: "ar-sec-05"
+    item: "Input validation strategy covers all entry points"
+    required: true
+  - id: "ar-sec-06"
+    item: "Audit logging captures security-relevant events"
+    required: true
+  - id: "ar-sec-07"
+    item: "OWASP Top 10 threats are mitigated in the design"
+    required: true
+  - id: "ar-sec-08"
+    item: "Threat model (STRIDE or equivalent) has been performed"
+    required: false
+  - id: "ar-sec-09"
+    item: "Compliance requirements are addressed (GDPR, HIPAA, SOC2, etc.)"
+    required: false
+
+scalability_and_performance:
+  - id: "ar-scale-01"
+    item: "Horizontal scaling strategy is defined"
+    required: true
+  - id: "ar-scale-02"
+    item: "Bottlenecks are identified with mitigation strategies"
+    required: true
+  - id: "ar-scale-03"
+    item: "Caching strategy is appropriate and documented"
+    required: true
+  - id: "ar-scale-04"
+    item: "Database scaling approach is defined (read replicas, sharding, etc.)"
+    required: false
+  - id: "ar-scale-05"
+    item: "Asynchronous processing is used where appropriate"
+    required: false
+  - id: "ar-scale-06"
+    item: "Performance targets are defined with measurement methods"
+    required: true
+  - id: "ar-scale-07"
+    item: "Load balancing strategy is specified"
+    required: true
+
+reliability_and_resilience:
+  - id: "ar-rel-01"
+    item: "Failure modes are identified and documented"
+    required: true
+  - id: "ar-rel-02"
+    item: "Graceful degradation strategy is defined"
+    required: true
+  - id: "ar-rel-03"
+    item: "Circuit breaker patterns applied for external dependencies"
+    required: false
+  - id: "ar-rel-04"
+    item: "Retry logic with exponential backoff is specified"
+    required: false
+  - id: "ar-rel-05"
+    item: "Health check endpoints are defined"
+    required: true
+  - id: "ar-rel-06"
+    item: "Disaster recovery plan is documented"
+    required: true
+  - id: "ar-rel-07"
+    item: "RTO and RPO targets are defined"
+    required: true
+
+infrastructure_and_deployment:
+  - id: "ar-infra-01"
+    item: "Deployment architecture supports zero-downtime deployments"
+    required: true
+  - id: "ar-infra-02"
+    item: "CI/CD pipeline is designed end-to-end"
+    required: true
+  - id: "ar-infra-03"
+    item: "Infrastructure as Code approach is specified"
+    required: false
+  - id: "ar-infra-04"
+    item: "Environment strategy is defined (dev, staging, production)"
+    required: true
+  - id: "ar-infra-05"
+    item: "Rollback procedure is documented"
+    required: true
+  - id: "ar-infra-06"
+    item: "Container strategy is defined if applicable"
+    required: false
+
+observability:
+  - id: "ar-obs-01"
+    item: "Logging strategy is defined (structured, centralized)"
+    required: true
+  - id: "ar-obs-02"
+    item: "Metrics collection approach is specified"
+    required: true
+  - id: "ar-obs-03"
+    item: "Distributed tracing is planned for cross-service calls"
+    required: false
+  - id: "ar-obs-04"
+    item: "Alerting rules and escalation paths are defined"
+    required: true
+  - id: "ar-obs-05"
+    item: "Dashboard requirements are documented"
+    required: false
+  - id: "ar-obs-06"
+    item: "Log retention and rotation policies are specified"
+    required: false
+
+documentation_quality:
+  - id: "ar-doc-01"
+    item: "Architecture Decision Records (ADRs) are complete"
+    required: true
+  - id: "ar-doc-02"
+    item: "Diagrams are clear, consistent, and up-to-date"
+    required: true
+  - id: "ar-doc-03"
+    item: "All technology choices are justified"
+    required: true
+  - id: "ar-doc-04"
+    item: "Glossary of terms is provided for domain-specific language"
+    required: false
+  - id: "ar-doc-05"
+    item: "Cost estimation is provided for infrastructure"
+    required: false
+  - id: "ar-doc-06"
+    item: "Trade-offs are explicitly documented for major decisions"
+    required: true

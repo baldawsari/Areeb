@@ -1,0 +1,112 @@
+# BMAD Workflow: Code Review
+# Multi-agent code review process for quality assurance
+
+name: "code-review"
+description: "Structured code review workflow with architecture, testability, and implementation feedback"
+version: "1.0.0"
+
+stages:
+  - id: "submit"
+    agent: "developer"
+    model: "sonnet"
+    tasks:
+      - "pr-preparation"
+      - "self-review"
+      - "documentation-check"
+    outputs:
+      - "pr-description.md"
+      - "self-review-notes.md"
+    handoff_to: "architecture-review"
+    description: >
+      Developer prepares the pull request for review. This includes
+      writing a clear PR description, performing a self-review pass,
+      and ensuring all documentation is current.
+
+  - id: "architecture-review"
+    agent: "architect"
+    model: "opus"
+    depends_on: ["submit"]
+    tasks:
+      - "design-pattern-review"
+      - "dependency-analysis"
+      - "scalability-assessment"
+      - "security-review"
+    outputs:
+      - "architecture-feedback.md"
+    handoff_to: "testability-review"
+    review_criteria:
+      - "Follows established architecture patterns"
+      - "No unnecessary coupling between components"
+      - "Appropriate separation of concerns"
+      - "Database queries are optimized"
+      - "API contracts are consistent"
+      - "Security best practices followed"
+      - "No hardcoded secrets or credentials"
+      - "Error handling is comprehensive"
+      - "Scalability considerations addressed"
+    description: >
+      Architect reviews the code for adherence to system architecture,
+      design patterns, security, and scalability concerns.
+
+  - id: "testability-review"
+    agent: "tester"
+    model: "sonnet"
+    depends_on: ["submit"]
+    tasks:
+      - "test-coverage-analysis"
+      - "test-quality-review"
+      - "edge-case-identification"
+      - "testability-feedback"
+    outputs:
+      - "testability-feedback.md"
+    handoff_to: "address-feedback"
+    review_criteria:
+      - "Adequate unit test coverage (>80%)"
+      - "Integration tests for critical paths"
+      - "Edge cases are tested"
+      - "Test names are descriptive"
+      - "Tests are independent and repeatable"
+      - "Mocking is appropriate and not excessive"
+      - "Error scenarios are tested"
+      - "Performance-sensitive code has benchmarks"
+    description: >
+      Tester reviews the code and tests for adequate coverage,
+      test quality, and identifies missing edge case tests.
+
+  - id: "address-feedback"
+    agent: "developer"
+    model: "sonnet"
+    depends_on: ["architecture-review", "testability-review"]
+    tasks:
+      - "feedback-triage"
+      - "implement-fixes"
+      - "respond-to-comments"
+      - "request-re-review"
+    outputs:
+      - "feedback-response.md"
+      - "changes-summary.md"
+    handoff_to: "final-approval"
+    description: >
+      Developer addresses all feedback from architecture and testability
+      reviews. Each comment is triaged, resolved, and responded to.
+      A re-review is requested if substantial changes were made.
+
+  - id: "final-approval"
+    agent: "architect"
+    model: "sonnet"
+    depends_on: ["address-feedback"]
+    tasks:
+      - "verify-fixes"
+      - "final-sign-off"
+    outputs:
+      - "approval-record.md"
+    handoff_to: null
+    description: >
+      Final verification that all feedback has been properly addressed.
+      Sign off on the PR for merge.
+
+merge_policy:
+  required_approvals: 2
+  required_reviewers: ["architect", "tester"]
+  auto_merge: false
+  delete_branch_on_merge: true

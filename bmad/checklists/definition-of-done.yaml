@@ -1,0 +1,135 @@
+# BMAD Checklist: Definition of Done
+# Standard DoD checklist applied to all tasks before they can be marked complete
+
+name: "definition-of-done"
+description: "Standard DoD checklist for all tasks"
+version: "1.0.0"
+applies_to: "all-tasks"
+
+items:
+  - "Code implemented and compiles"
+  - "Unit tests written and passing"
+  - "Code review completed"
+  - "Documentation updated"
+  - "No known bugs"
+  - "Acceptance criteria met"
+  - "Test plan executed"
+  - "Performance validated"
+  - "Security review done"
+  - "Scrum master notified"
+
+by_category:
+  code_quality:
+    - id: "dod-cq-01"
+      item: "Code compiles and builds without errors or warnings"
+      required: true
+    - id: "dod-cq-02"
+      item: "Code follows project style guide and naming conventions"
+      required: true
+    - id: "dod-cq-03"
+      item: "No TODO or FIXME comments left unresolved"
+      required: true
+    - id: "dod-cq-04"
+      item: "Static analysis and linting pass with zero issues"
+      required: true
+    - id: "dod-cq-05"
+      item: "No hardcoded secrets, credentials, or environment-specific values"
+      required: true
+
+  testing:
+    - id: "dod-tst-01"
+      item: "Unit tests written for all new code"
+      required: true
+    - id: "dod-tst-02"
+      item: "Unit test coverage meets or exceeds 80% threshold"
+      required: true
+    - id: "dod-tst-03"
+      item: "All unit tests pass consistently"
+      required: true
+    - id: "dod-tst-04"
+      item: "Integration tests written for critical paths"
+      required: true
+    - id: "dod-tst-05"
+      item: "Regression test suite passes"
+      required: true
+    - id: "dod-tst-06"
+      item: "Edge cases and error scenarios tested"
+      required: false
+
+  review:
+    - id: "dod-rev-01"
+      item: "Code review completed by at least one peer"
+      required: true
+    - id: "dod-rev-02"
+      item: "All review comments addressed or resolved"
+      required: true
+    - id: "dod-rev-03"
+      item: "Architecture review completed for significant changes"
+      required: false
+    - id: "dod-rev-04"
+      item: "Security review completed for security-sensitive changes"
+      required: false
+
+  documentation:
+    - id: "dod-doc-01"
+      item: "Code is self-documenting with clear naming"
+      required: true
+    - id: "dod-doc-02"
+      item: "Complex logic has explanatory comments"
+      required: true
+    - id: "dod-doc-03"
+      item: "API documentation is updated"
+      required: true
+    - id: "dod-doc-04"
+      item: "README updated if setup or usage changed"
+      required: false
+    - id: "dod-doc-05"
+      item: "Changelog entry added"
+      required: false
+
+  acceptance:
+    - id: "dod-acc-01"
+      item: "All acceptance criteria from the user story are met"
+      required: true
+    - id: "dod-acc-02"
+      item: "Feature works as described in the PRD"
+      required: true
+    - id: "dod-acc-03"
+      item: "No known bugs or defects in the implemented feature"
+      required: true
+
+  performance:
+    - id: "dod-perf-01"
+      item: "Response times meet defined thresholds"
+      required: true
+    - id: "dod-perf-02"
+      item: "No memory leaks or resource exhaustion identified"
+      required: true
+    - id: "dod-perf-03"
+      item: "Database queries are optimized (no N+1, proper indexing)"
+      required: false
+
+  security:
+    - id: "dod-sec-01"
+      item: "Input validation is implemented for all user inputs"
+      required: true
+    - id: "dod-sec-02"
+      item: "Authentication and authorization are enforced"
+      required: true
+    - id: "dod-sec-03"
+      item: "Sensitive data is encrypted at rest and in transit"
+      required: true
+    - id: "dod-sec-04"
+      item: "Security scan shows no critical or high vulnerabilities"
+      required: true
+
+  process:
+    - id: "dod-proc-01"
+      item: "Scrum master notified of completion"
+      required: true
+    - id: "dod-proc-02"
+      item: "Kanban board updated to reflect current status"
+      required: true
+    - id: "dod-proc-03"
+      item: "Any follow-up tasks or tech debt items documented"
+      required: false
