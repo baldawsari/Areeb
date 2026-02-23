@@ -2,7 +2,8 @@
 # AI Agent Team with BMAD Workflows
 
 gateway:
-  host: "127.0.0.1"
+  mode: "local"
+  host: "0.0.0.0"
   port: 18789
   log_level: "info"
 
@@ -17,17 +18,10 @@ providers:
 agents:
   defaults:
     memory:
-      backend: "qmd"
-      qmd:
+      backend: "markdown"
+      markdown:
         paths:
           - "./workspace/memory"
-        sessions:
-          enabled: true
-        interval: 300
-      temporalDecay:
-        enabled: true
-      mmrDedup:
-        enabled: true
     tools:
       sessions_list: true
       sessions_history: true
@@ -88,14 +82,14 @@ channels:
     streamMode: true
 
   slack:
-    enabled: true
+    enabled: false
     botToken: "${SLACK_BOT_TOKEN}"
     appToken: "${SLACK_APP_TOKEN}"
     mode: "socket"
     groupPolicy: "allowlist"
 
   voice:
-    enabled: true
+    enabled: false
     provider: "elevenlabs"
     apiKey: "${ELEVENLABS_API_KEY}"
     model: "eleven_multilingual_v2"

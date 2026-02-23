@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { AGENTS } from './agents';
+import gateway from './gateway';
 
 const SAMPLE_TASKS = [
   {
@@ -221,13 +222,119 @@ const initialAgents = AGENTS.map((agent) => {
   };
 });
 
+// Map a gateway session event to a dashboard message
+function mapSessionMessage(payload) {
+  const agentId = payload.agentId || payload.agent || 'analyst';
+  const isFromUser = payload.role === 'user';
+  return {
+    id: `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    from: isFromUser ? 'user' : agentId,
+    to: isFromUser ? agentId : 'user',
+    content: typeof payload.content === 'string'
+      ? payload.content
+      : payload.text || JSON.stringify(payload.content || ''),
+    timestamp: payload.timestamp || new Date().toISOString(),
+    type: isFromUser ? 'directive' : 'response',
+    live: true,
+  };
+}
+
 const useStore = create((set, get) => ({
+  // Gateway connection
+  connectionStatus: 'disconnected',
+  gatewayInfo: null,
+
+  // Data
   agents: initialAgents,
   tasks: SAMPLE_TASKS,
   messages: SAMPLE_MESSAGES,
   filterAgent: null,
   filterWorkflow: null,
   selectedTask: null,
+
+  // Gateway actions
+  connectGateway: (url, token) => {
+    gateway.onStatusChange((status) => {
+      set({ connectionStatus: status });
+    });
+
+    gateway.on('connected', async () => {
+      try {
+        const [health, channels] = await Promise.allSettled([
+          gateway.health(),
+          gateway.channelsStatus(),
+        ]);
+        set({
+          gatewayInfo: {
+            health: health.status === 'fulfilled' ? health.value : null,
+            channels: channels.status === 'fulfilled' ? channels.value : null,
+          },
+        });
+      } catch {}
+
+      // Fetch sessions and build live message history
+      try {
+        const sessions = await gateway.listSessions();
+        if (sessions?.sessions?.length) {
+          const liveMessages = [];
+          for (const session of sessions.sessions.slice(0, 10)) {
+            try {
+              const history = await gateway.sessionHistory(session.key || session.id);
+              if (history?.messages) {
+                for (const msg of history.messages) {
+                  liveMessages.push(mapSessionMessage({ ...msg, agentId: session.agentId }));
+                }
+              }
+            } catch {}
+          }
+          if (liveMessages.length > 0) {
+            liveMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            set({ messages: liveMessages });
+          }
+        }
+      } catch {}
+    });
+
+    // Live event: new session message
+    gateway.on('session.message', (payload) => {
+      const msg = mapSessionMessage(payload);
+      set((state) => ({ messages: [...state.messages, msg] }));
+    });
+
+    // Live event: agent activity
+    gateway.on('agent.turn.start', (payload) => {
+      const agentId = payload?.agentId;
+      if (agentId) {
+        set((state) => ({
+          agents: state.agents.map((a) =>
+            a.id === agentId ? { ...a, status: 'working' } : a
+          ),
+        }));
+      }
+    });
+
+    gateway.on('agent.turn.end', (payload) => {
+      const agentId = payload?.agentId;
+      if (agentId) {
+        set((state) => ({
+          agents: state.agents.map((a) =>
+            a.id === agentId ? { ...a, status: 'idle' } : a
+          ),
+        }));
+      }
+    });
+
+    gateway.connect(url, token);
+  },
+
+  disconnectGateway: () => {
+    gateway.disconnect();
+    set({
+      connectionStatus: 'disconnected',
+      gatewayInfo: null,
+      messages: SAMPLE_MESSAGES,
+    });
+  },
 
   // Task actions
   addTask: (task) =>

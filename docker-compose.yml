@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   openclaw-gateway:
     image: node:22-slim
@@ -7,7 +5,8 @@ services:
     working_dir: /app
     volumes:
       - ./openclaw:/app
-      - openclaw-data:/root/.openclaw
+      - ./openclaw/openclaw.json:/root/.openclaw/openclaw.json:ro
+      - openclaw-agents:/root/.openclaw/agents
     ports:
       - "18789:18789"
     env_file:
@@ -15,7 +14,7 @@ services:
     command: >
       sh -c "apt-get update && apt-get install -y git &&
              npm install -g openclaw@latest &&
-             openclaw gateway start"
+             openclaw gateway --verbose --allow-unconfigured"
     restart: unless-stopped
     networks:
       - agent-network
@@ -41,10 +40,11 @@ services:
     container_name: agent-team-qmd
     working_dir: /app
     volumes:
-      - openclaw-data:/root/.openclaw
-      - qmd-models:/root/.qmd
+      - qmd-data:/root/.qmd
     command: >
-      sh -c "bunx qmd serve --port 9876"
+      sh -c "apt-get update && apt-get install -y git &&
+             bun install -g https://github.com/tobi/qmd &&
+             qmd serve --port 9876"
     ports:
       - "9876:9876"
     restart: unless-stopped
@@ -52,8 +52,8 @@ services:
       - agent-network
 
 volumes:
-  openclaw-data:
-  qmd-models:
+  openclaw-agents:
+  qmd-data:
 
 networks:
   agent-network:

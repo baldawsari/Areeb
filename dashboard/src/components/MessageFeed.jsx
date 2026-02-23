@@ -3,6 +3,9 @@ import { Send, Filter, ArrowRight } from 'lucide-react';
 import useStore from '../lib/store';
 import { AGENT_MAP } from '../lib/agents';
 
+const USER_AGENT = { id: 'user', name: 'User', color: '#6B7280', icon: '\uD83D\uDC64' };
+const getAgent = (id) => AGENT_MAP[id] || { ...USER_AGENT, id, name: id };
+
 const MESSAGE_TYPE_STYLES = {
   handoff: { bg: 'bg-violet-500/10', border: 'border-violet-500/20', label: 'Handoff' },
   directive: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', label: 'Directive' },
@@ -97,8 +100,8 @@ export default function MessageFeed() {
       {/* Messages */}
       <div ref={feedRef} className="flex-1 overflow-y-auto p-3 space-y-2">
         {filtered.map((msg) => {
-          const fromAgent = AGENT_MAP[msg.from];
-          const toAgent = AGENT_MAP[msg.to];
+          const fromAgent = getAgent(msg.from);
+          const toAgent = getAgent(msg.to);
           const typeStyle = MESSAGE_TYPE_STYLES[msg.type] || MESSAGE_TYPE_STYLES.info;
 
           return (

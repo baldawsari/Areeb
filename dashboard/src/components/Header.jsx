@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Menu, Bell, Activity, Search } from 'lucide-react';
+import { Menu, Bell, Activity, Search, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import useStore from '../lib/store';
 
 const NAV_ITEMS = [
@@ -11,14 +11,37 @@ const NAV_ITEMS = [
   { path: '/settings', label: 'Settings' },
 ];
 
+const CONNECTION_STATUS = {
+  disconnected: { color: 'text-surface-500', bg: 'bg-surface-500/10', border: 'border-surface-500/20', label: 'Offline', Icon: WifiOff },
+  connecting: { color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', label: 'Connecting...', Icon: Loader2 },
+  connected: { color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20', label: 'Live', Icon: Wifi },
+  error: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', label: 'Error', Icon: WifiOff },
+};
+
 export default function Header({ onToggleSidebar }) {
   const location = useLocation();
   const messages = useStore((s) => s.messages);
   const tasks = useStore((s) => s.tasks);
+  const connectionStatus = useStore((s) => s.connectionStatus);
+  const connectGateway = useStore((s) => s.connectGateway);
+  const disconnectGateway = useStore((s) => s.disconnectGateway);
   const [showNotifications, setShowNotifications] = React.useState(false);
+
+  // Auto-connect on mount
+  React.useEffect(() => {
+    const url = import.meta.env.VITE_GATEWAY_URL || 'ws://localhost:18789';
+    const token = import.meta.env.VITE_GATEWAY_TOKEN || '';
+    if (token) {
+      connectGateway(url, token);
+    }
+    return () => disconnectGateway();
+  }, []);
 
   const activeTasks = tasks.filter((t) => t.status === 'in-progress').length;
   const recentMessages = messages.slice(-3).reverse();
+
+  const connCfg = CONNECTION_STATUS[connectionStatus] || CONNECTION_STATUS.disconnected;
+  const ConnIcon = connCfg.Icon;
 
   return (
     <header className="h-14 border-b border-surface-700/50 bg-surface-900/80 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-20">
@@ -55,6 +78,24 @@ export default function Header({ onToggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Connection status */}
+        <button
+          onClick={() => {
+            if (connectionStatus === 'connected') {
+              disconnectGateway();
+            } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
+              connectGateway();
+            }
+          }}
+          className={`flex items-center gap-1.5 px-2.5 py-1 ${connCfg.bg} border ${connCfg.border} rounded-full cursor-pointer hover:opacity-80 transition-opacity`}
+          title={connectionStatus === 'connected' ? 'Click to disconnect' : 'Click to connect to gateway'}
+        >
+          <ConnIcon size={14} className={`${connCfg.color} ${connectionStatus === 'connecting' ? 'animate-spin' : ''}`} />
+          <span className={`text-xs font-medium ${connCfg.color}`}>
+            {connCfg.label}
+          </span>
+        </button>
+
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-surface-800 rounded-lg border border-surface-700/50">
           <Search size={14} className="text-surface-500" />
           <input

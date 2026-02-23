@@ -1,0 +1,90 @@
+{
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "lan",
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    }
+  },
+  "agents": {
+    "defaults": {
+      "contextPruning": { "mode": "cache-ttl", "ttl": "1h" },
+      "compaction": { "mode": "safeguard" },
+      "heartbeat": { "every": "30m" }
+    },
+    "list": [
+      {
+        "id": "analyst",
+        "name": "Business Analyst",
+        "default": true,
+        "model": "anthropic/claude-opus-4-6",
+        "workspace": "/app/agents/analyst"
+      },
+      {
+        "id": "pm",
+        "name": "Product Manager",
+        "model": "anthropic/claude-sonnet-4-6",
+        "workspace": "/app/agents/pm"
+      },
+      {
+        "id": "architect",
+        "name": "Solutions Architect",
+        "model": "anthropic/claude-opus-4-6",
+        "workspace": "/app/agents/architect"
+      },
+      {
+        "id": "developer",
+        "name": "Senior Developer",
+        "model": "anthropic/claude-sonnet-4-6",
+        "workspace": "/app/agents/developer"
+      },
+      {
+        "id": "tester",
+        "name": "QA Engineer",
+        "model": "anthropic/claude-sonnet-4-6",
+        "workspace": "/app/agents/tester"
+      },
+      {
+        "id": "scrum-master",
+        "name": "Scrum Master",
+        "model": "anthropic/claude-sonnet-4-6",
+        "workspace": "/app/agents/scrum-master"
+      }
+    ]
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "open",
+      "allowFrom": ["*"],
+      "groupPolicy": "allowlist",
+      "streaming": "off"
+    }
+  },
+  "bindings": [
+    {
+      "agentId": "analyst",
+      "match": {
+        "channel": "telegram",
+        "peer": {
+          "kind": "direct",
+          "id": "${ADMIN_TELEGRAM_ID}"
+        }
+      }
+    },
+    {
+      "agentId": "analyst",
+      "match": { "channel": "*" }
+    }
+  ],
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true
+      }
+    }
+  }
+}
