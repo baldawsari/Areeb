@@ -1,6 +1,9 @@
 services:
   openclaw-gateway:
-    image: node:22-slim
+    build:
+      context: ./openclaw
+      dockerfile: Dockerfile
+    image: areeb-gateway:latest
     container_name: agent-team-gateway
     working_dir: /app
     volumes:
@@ -11,10 +14,6 @@ services:
       - "18789:18789"
     env_file:
       - ./openclaw/.env
-    command: >
-      sh -c "apt-get update && apt-get install -y git &&
-             npm install -g openclaw@latest &&
-             openclaw gateway --verbose --allow-unconfigured"
     restart: unless-stopped
     networks:
       - agent-network
