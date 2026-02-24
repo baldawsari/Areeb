@@ -1,0 +1,155 @@
+/**
+ * Parse a scrum-master BOARD.md markdown file into structured task objects.
+ *
+ * Expected format:
+ *   ## 🏃 Sprint N (Active) — Started: YYYY-MM-DD
+ *   | # | Task | Added | Status |
+ *   |---|------|-------|--------|
+ *   | 1 | Task description | 2026-02-24 | 🏃 In Progress |
+ *
+ *   ## 🗂️ Backlog
+ *   (same table format)
+ *
+ *   ## ✅ Done
+ *   (same table format or "Nothing completed yet.")
+ */
+
+// Map BOARD.md status emojis/text to dashboard column statuses
+const STATUS_MAP = {
+  'in progress': 'in-progress',
+  'to do': 'todo',
+  'todo': 'todo',
+  'done': 'done',
+  'review': 'review',
+  'blocked': 'in-progress',
+  'backlog': 'backlog',
+};
+
+function normalizeStatus(raw, section) {
+  const cleaned = raw.replace(/[🏃✅📋🗂️⏳🔄⬜🔲]/gu, '').trim().toLowerCase();
+  if (STATUS_MAP[cleaned]) return STATUS_MAP[cleaned];
+  // Infer from section context
+  if (section === 'done') return 'done';
+  if (section === 'backlog') return 'backlog';
+  if (cleaned.includes('progress')) return 'in-progress';
+  if (cleaned.includes('review')) return 'review';
+  if (cleaned.includes('block')) return 'in-progress';
+  return 'todo';
+}
+
+function parseTableRows(lines) {
+  const rows = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('|')) continue;
+    const cells = trimmed
+      .split('|')
+      .slice(1, -1) // drop empty first/last from leading/trailing |
+      .map((c) => c.trim());
+    // Skip header and separator rows
+    if (cells.length < 2) continue;
+    if (cells.every((c) => /^[-:]+$/.test(c))) continue;
+    if (cells[0] === '#' || cells[0].toLowerCase() === 'id') continue;
+    rows.push(cells);
+  }
+  return rows;
+}
+
+/**
+ * Parse BOARD.md content into an array of task objects.
+ * @param {string} markdown - Raw BOARD.md content
+ * @param {string} agentId - The agent that owns this board (e.g. "scrum-master")
+ * @returns {Array<{id, title, status, agent, priority, createdAt, updatedAt, source, sprint}>}
+ */
+export function parseBoard(markdown, agentId = 'scrum-master') {
+  if (!markdown || typeof markdown !== 'string') return [];
+
+  const lines = markdown.split('\n');
+  const tasks = [];
+  let currentSection = null;
+  let currentSprint = null;
+  let sectionLines = [];
+
+  const flushSection = () => {
+    if (!sectionLines.length) return;
+    const rows = parseTableRows(sectionLines);
+    for (const cells of rows) {
+      // Expected columns: # | Task | Added | Status
+      // But be flexible — at minimum need index and task name
+      const num = cells[0];
+      const title = cells[1] || '';
+      const added = cells[2] || '';
+      const statusRaw = cells[3] || '';
+
+      if (!title) continue;
+
+      const status = statusRaw
+        ? normalizeStatus(statusRaw, currentSection)
+        : currentSection === 'done'
+          ? 'done'
+          : currentSection === 'backlog'
+            ? 'backlog'
+            : 'todo';
+
+      tasks.push({
+        id: `agent-${agentId}-${currentSprint || 'board'}-${num}`,
+        title: title.trim(),
+        description: '',
+        status,
+        agent: agentId,
+        priority: 'medium',
+        workflow: currentSprint ? `Sprint ${currentSprint}` : 'Backlog',
+        createdAt: added ? new Date(added + 'T00:00:00Z').toISOString() : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        source: 'agent',
+        sprint: currentSprint,
+      });
+    }
+    sectionLines = [];
+  };
+
+  for (const line of lines) {
+    // Detect section headers
+    const sprintMatch = line.match(/##\s*.*Sprint\s+(\d+)/i);
+    const backlogMatch = line.match(/##\s*.*Backlog/i);
+    const doneMatch = line.match(/##\s*.*Done/i);
+
+    if (sprintMatch) {
+      flushSection();
+      currentSection = 'sprint';
+      currentSprint = sprintMatch[1];
+    } else if (backlogMatch) {
+      flushSection();
+      currentSection = 'backlog';
+      currentSprint = null;
+    } else if (doneMatch) {
+      flushSection();
+      currentSection = 'done';
+      currentSprint = null;
+    } else if (line.match(/^##\s/)) {
+      // Other H2 section — flush
+      flushSection();
+      currentSection = null;
+    } else {
+      sectionLines.push(line);
+    }
+  }
+  flushSection();
+
+  return tasks;
+}
+
+/**
+ * Merge agent-sourced tasks with localStorage tasks.
+ * Agent tasks replace any existing agent task with the same ID.
+ * Local tasks (source !== 'agent') are preserved.
+ */
+export function mergeTaskSources(localTasks, agentTasks) {
+  const localOnly = localTasks.filter((t) => t.source !== 'agent');
+  // Deduplicate agent tasks by ID
+  const agentMap = new Map();
+  for (const t of agentTasks) {
+    agentMap.set(t.id, t);
+  }
+  return [...localOnly, ...agentMap.values()];
+}

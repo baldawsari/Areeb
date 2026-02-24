@@ -1,9 +1,14 @@
 import { create } from 'zustand';
 import { AGENTS } from './agents';
 import gateway from './gateway';
+import { parseBoard, mergeTaskSources } from './board-parser';
 
 // --- localStorage persistence for tasks ---
 const TASKS_STORAGE_KEY = 'areeb-dashboard-tasks';
+
+// --- Agent workspace file polling ---
+const BOARD_POLL_INTERVAL_MS = 60_000; // poll every 60s
+const BOARD_FILE_NAME = 'BOARD.md';
 
 const SAMPLE_TASKS = [
   {
@@ -166,6 +171,8 @@ const initialAgents = AGENTS.map((agent) => ({
   sessionCount: 0,
 }));
 
+let _boardPollTimer = null;
+
 const useStore = create((set, get) => ({
   // Gateway connection
   connectionStatus: 'disconnected',
@@ -210,6 +217,19 @@ const useStore = create((set, get) => ({
           };
         }),
       }));
+    });
+
+    // After connect, fetch agent BOARD.md files if we have read scope
+    gateway.on('connected', () => {
+      if (gateway.hasScope('operator.read')) {
+        console.log('[store] operator.read scope available — fetching agent boards');
+        get().fetchAgentBoards();
+        // Start polling
+        clearInterval(_boardPollTimer);
+        _boardPollTimer = setInterval(() => get().fetchAgentBoards(), BOARD_POLL_INTERVAL_MS);
+      } else {
+        console.log('[store] No operator.read scope — agent board sync unavailable');
+      }
     });
 
     // Live event: health updates (channels, agents)
@@ -292,6 +312,8 @@ const useStore = create((set, get) => ({
   },
 
   disconnectGateway: () => {
+    clearInterval(_boardPollTimer);
+    _boardPollTimer = null;
     gateway.disconnect();
     set({
       connectionStatus: 'disconnected',
@@ -299,6 +321,35 @@ const useStore = create((set, get) => ({
       messages: [],
       agents: initialAgents,
     });
+  },
+
+  // Fetch BOARD.md from all agent workspaces and merge into task list
+  fetchAgentBoards: async () => {
+    if (!gateway.hasScope('operator.read')) return;
+
+    const agentIds = AGENTS.map((a) => a.id);
+    const allAgentTasks = [];
+
+    for (const agentId of agentIds) {
+      try {
+        const result = await gateway.agentFilesGet(agentId, BOARD_FILE_NAME);
+        if (result?.file && !result.file.missing && result.file.content) {
+          const tasks = parseBoard(result.file.content, agentId);
+          allAgentTasks.push(...tasks);
+        }
+      } catch {
+        // Agent may not have a BOARD.md — that's fine
+      }
+    }
+
+    if (allAgentTasks.length > 0) {
+      set((state) => {
+        const merged = mergeTaskSources(state.tasks, allAgentTasks);
+        saveTasks(merged);
+        return { tasks: merged };
+      });
+      console.log(`[store] Synced ${allAgentTasks.length} tasks from agent boards`);
+    }
   },
 
   // Task actions (persisted to localStorage)

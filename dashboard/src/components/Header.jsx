@@ -1,7 +1,8 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Menu, Bell, Activity, Search, Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { Menu, Bell, Activity, Search, Wifi, WifiOff, Loader2, Shield, ShieldCheck } from 'lucide-react';
 import useStore from '../lib/store';
+import gateway from '../lib/gateway';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard' },
@@ -99,6 +100,28 @@ export default function Header({ onToggleSidebar }) {
             {connCfg.label}
           </span>
         </button>
+
+        {connectionStatus === 'connected' && (
+          <div
+            className={`hidden sm:flex items-center gap-1 px-2 py-1 rounded-full ${
+              gateway.hasScope('operator.read')
+                ? 'bg-green-500/10 border border-green-500/20'
+                : 'bg-yellow-500/10 border border-yellow-500/20'
+            }`}
+            title={`Scopes: ${gateway.grantedScopes.join(', ') || 'none'}`}
+          >
+            {gateway.hasScope('operator.read') ? (
+              <ShieldCheck size={12} className="text-green-400" />
+            ) : (
+              <Shield size={12} className="text-yellow-400" />
+            )}
+            <span className={`text-xs font-medium ${
+              gateway.hasScope('operator.read') ? 'text-green-400' : 'text-yellow-400'
+            }`}>
+              {gateway.hasScope('operator.read') ? 'Full' : 'Limited'}
+            </span>
+          </div>
+        )}
 
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-surface-800 rounded-lg border border-surface-700/50">
           <Search size={14} className="text-surface-500" />

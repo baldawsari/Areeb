@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Clock, GripVertical, X } from 'lucide-react';
+import { Clock, GripVertical, X, RefreshCw } from 'lucide-react';
 import { AGENT_MAP, PRIORITY_CONFIG } from '../lib/agents';
 import useStore from '../lib/store';
 
@@ -111,6 +111,9 @@ function CardContent({ task, agent, priorityConfig, formatTime, isExpanded }) {
           </span>
         </div>
         <span className="text-xs text-surface-500 flex items-center gap-1">
+          {task.source === 'agent' && (
+            <RefreshCw size={10} className="text-violet-400" title="Synced from agent board" />
+          )}
           <Clock size={10} />
           {formatTime(task.updatedAt)}
         </span>

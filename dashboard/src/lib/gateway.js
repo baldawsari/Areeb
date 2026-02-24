@@ -1,7 +1,10 @@
+import { getOrCreateIdentity, buildPayload, signPayload } from './device-identity';
+
 const DEFAULT_URL = import.meta.env.VITE_GATEWAY_URL || 'ws://localhost:18789';
 const DEFAULT_TOKEN = import.meta.env.VITE_GATEWAY_TOKEN || '';
 
 const PROTOCOL_VERSION = 3;
+const FULL_SCOPES = ['operator.admin', 'operator.read', 'operator.write'];
 
 class OpenClawGateway {
   constructor() {
@@ -17,6 +20,8 @@ class OpenClawGateway {
     this._token = null;
     this.snapshot = null;
     this.serverInfo = null;
+    this.grantedScopes = [];
+    this._identity = null;
   }
 
   onStatusChange(fn) {
@@ -33,6 +38,7 @@ class OpenClawGateway {
 
     this._url = url || DEFAULT_URL;
     this._token = token || DEFAULT_TOKEN;
+    this._identity = getOrCreateIdentity();
     this._setStatus('connecting');
 
     try {
@@ -77,6 +83,7 @@ class OpenClawGateway {
     this._setStatus('disconnected');
     this.snapshot = null;
     this.serverInfo = null;
+    this.grantedScopes = [];
     for (const [, { reject }] of this.pending) reject(new Error('disconnected'));
     this.pending.clear();
   }
@@ -96,7 +103,6 @@ class OpenClawGateway {
     if (frame.type === 'event') {
       this._handleEvent(frame);
     } else if (frame.type === 'res') {
-      // Response IDs may come back as string or number — normalize to string
       const h = this.pending.get(String(frame.id));
       if (h) {
         this.pending.delete(String(frame.id));
@@ -111,10 +117,44 @@ class OpenClawGateway {
   }
 
   async _handleEvent(frame) {
-    // Challenge → respond with connect handshake
+    // Challenge → respond with connect handshake including device identity
     if (frame.event === 'connect.challenge') {
-      console.log('[gateway] Challenge received, authenticating...');
+      console.log('[gateway] Challenge received, authenticating with device identity...');
+      const nonce = frame.payload?.nonce;
+      if (!nonce) {
+        console.error('[gateway] Challenge missing nonce');
+        this._setStatus('error');
+        return;
+      }
+
       try {
+        const signedAtMs = Date.now();
+        const role = 'operator';
+        const scopes = FULL_SCOPES;
+
+        // Build device auth — sign the v2 payload with our Ed25519 key
+        let device = undefined;
+        if (this._identity) {
+          const payload = buildPayload({
+            deviceId: this._identity.deviceId,
+            clientId: 'cli',
+            clientMode: 'cli',
+            role,
+            scopes,
+            signedAtMs,
+            token: this._token || null,
+            nonce,
+          });
+          const signature = signPayload(this._identity.privateKeyHex, payload);
+          device = {
+            id: this._identity.deviceId,
+            publicKey: this._identity.publicKeyBase64Url,
+            signature,
+            signedAt: signedAtMs,
+            nonce,
+          };
+        }
+
         const helloOk = await this.request('connect', {
           minProtocol: PROTOCOL_VERSION,
           maxProtocol: PROTOCOL_VERSION,
@@ -124,13 +164,15 @@ class OpenClawGateway {
             platform: navigator?.platform || 'web',
             mode: 'cli',
           },
-          role: 'operator',
-          scopes: ['operator.admin'],
+          role,
+          scopes,
           caps: [],
           commands: [],
           permissions: {},
           auth: { token: this._token },
+          device,
         });
+
         this.serverInfo = {
           protocol: helloOk.protocol,
           version: helloOk.server?.version,
@@ -140,9 +182,12 @@ class OpenClawGateway {
           tickIntervalMs: helloOk.policy?.tickIntervalMs || 30000,
         };
         this.snapshot = helloOk.snapshot || null;
+        this.grantedScopes = helloOk.auth?.scopes || scopes;
         this._setStatus('connected');
         this._reconnectDelay = 1000;
-        console.log('[gateway] Connected. Agents:', this.snapshot?.health?.agents?.length || 0);
+
+        const scopeStr = this.grantedScopes.join(', ');
+        console.log(`[gateway] Connected. Agents: ${this.snapshot?.health?.agents?.length || 0}, Scopes: [${scopeStr}]`);
         this._emit('connected', helloOk);
       } catch (err) {
         console.error('[gateway] Handshake failed:', err.message);
@@ -151,7 +196,7 @@ class OpenClawGateway {
       return;
     }
 
-    // Tick heartbeat — update last seen
+    // Tick heartbeat — silent
     if (frame.event === 'tick') {
       return;
     }
@@ -196,7 +241,49 @@ class OpenClawGateway {
     });
   }
 
-  // Convenience getters for snapshot data
+  // --- RPC convenience methods (require operator.read / operator.write scopes) ---
+
+  hasScope(scope) {
+    return this.grantedScopes.includes(scope);
+  }
+
+  /** List files in an agent's workspace */
+  agentFilesList(agentId) {
+    return this.request('agents.files.list', { agentId });
+  }
+
+  /** Get a specific file from an agent's workspace */
+  agentFilesGet(agentId, name) {
+    return this.request('agents.files.get', { agentId, name });
+  }
+
+  /** List sessions */
+  sessionsList() {
+    return this.request('sessions.list', {});
+  }
+
+  /** Get chat history for a session */
+  chatHistory(sessionKey) {
+    return this.request('chat.history', { sessionKey });
+  }
+
+  /** Send a chat message */
+  chatSend(params) {
+    return this.request('chat.send', params);
+  }
+
+  /** List agents */
+  agentsList() {
+    return this.request('agents.list', {});
+  }
+
+  /** Get health */
+  health() {
+    return this.request('health', {});
+  }
+
+  // --- Snapshot getters ---
+
   getAgents() {
     return this.snapshot?.health?.agents || [];
   }
