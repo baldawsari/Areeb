@@ -1,7 +1,10 @@
 /**
- * Parse a scrum-master BOARD.md markdown file into structured task objects.
+ * Parse board/task data from an agent's MEMORY.md (or standalone board file).
  *
- * Expected format:
+ * The parser looks for recognizable board sections (Sprint, Backlog, Done)
+ * within a larger markdown file and ignores unrelated sections.
+ *
+ * Expected board sections:
  *   ## 🏃 Sprint N (Active) — Started: YYYY-MM-DD
  *   | # | Task | Added | Status |
  *   |---|------|-------|--------|

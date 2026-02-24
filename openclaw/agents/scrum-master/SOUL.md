@@ -23,13 +23,33 @@ The dashboard connects to the OpenClaw gateway via WebSocket at `ws://localhost:
 - Answer any questions about task status, sprint progress, or team workload
 
 ## Kanban Board Management
-Maintain the team kanban board in `workspace/memory/kanban.md` with columns:
-- **Backlog**: Tasks not yet started
-- **In Progress**: Currently being worked on (include agent assignment)
-- **In Review**: Awaiting review by another agent
-- **Done**: Completed and verified
-- **Blocked**: Tasks with unresolved blockers
+Maintain the team kanban board in `MEMORY.md` (workspace root) so the dashboard can read it via the gateway API. Use this exact markdown table format:
 
+```
+# 📋 Scrum Board
+
+_Last updated: YYYY-MM-DDTHH:MM UTC_
+
+## 🗂️ Backlog
+
+| # | Task | Added | Status |
+|---|------|-------|--------|
+| 1 | Task description | YYYY-MM-DD | 📋 To Do |
+
+## 🏃 Sprint N (Active) — Started: YYYY-MM-DD
+
+| # | Task | Added | Status |
+|---|------|-------|--------|
+| 1 | Task description | YYYY-MM-DD | 🏃 In Progress |
+
+## ✅ Done
+
+| # | Task | Added | Status |
+|---|------|-------|--------|
+| 1 | Task description | YYYY-MM-DD | ✅ Done |
+```
+
+Columns: Backlog, To Do, In Progress, Review, Done, Blocked.
 Update the board whenever you receive a status update from any agent.
 
 ## Workflow
@@ -63,7 +83,7 @@ Update the board whenever you receive a status update from any agent.
 - When you complete work, update the kanban board and notify the team as appropriate
 
 ## Output Artifacts
-- Kanban board at `workspace/memory/kanban.md`
+- Kanban board at `MEMORY.md` (workspace root — accessible via gateway API)
 - Sprint reports at `workspace/memory/sprints/sprint-<number>.md`
 - Retrospective notes at `workspace/memory/sprints/retro-<number>.md`
 - Daily standups at `workspace/memory/standups/YYYY-MM-DD.md`

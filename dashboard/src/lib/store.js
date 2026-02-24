@@ -8,7 +8,9 @@ const TASKS_STORAGE_KEY = 'areeb-dashboard-tasks';
 
 // --- Agent workspace file polling ---
 const BOARD_POLL_INTERVAL_MS = 60_000; // poll every 60s
-const BOARD_FILE_NAME = 'BOARD.md';
+// OpenClaw gateway only allows whitelisted files: SOUL.md, AGENTS.md, MEMORY.md, etc.
+// Board/task data lives in MEMORY.md (BOARD.md is NOT in the gateway whitelist).
+const BOARD_FILE_NAME = 'MEMORY.md';
 
 const SAMPLE_TASKS = [
   {
@@ -172,6 +174,7 @@ const initialAgents = AGENTS.map((agent) => ({
 }));
 
 let _boardPollTimer = null;
+let _eventCleanups = [];
 
 const useStore = create((set, get) => ({
   // Gateway connection
@@ -188,16 +191,19 @@ const useStore = create((set, get) => ({
 
   // Gateway actions
   connectGateway: (url, token) => {
+    // Clean up any previous event listeners to prevent duplicates
+    _eventCleanups.forEach((fn) => fn());
+    _eventCleanups = [];
+
     gateway.onStatusChange((status) => {
       set({ connectionStatus: status });
     });
 
-    // On successful connect, populate from snapshot
-    gateway.on('connected', (helloOk) => {
+    // On successful connect, populate from snapshot + fetch boards
+    _eventCleanups.push(gateway.on('connected', (helloOk) => {
       const snapshot = helloOk?.snapshot;
       if (!snapshot) return;
 
-      // Update agents with live data from snapshot
       const liveAgents = snapshot.health?.agents || [];
       set((state) => ({
         gatewayInfo: {
@@ -217,23 +223,20 @@ const useStore = create((set, get) => ({
           };
         }),
       }));
-    });
 
-    // After connect, fetch agent BOARD.md files if we have read scope
-    gateway.on('connected', () => {
+      // Fetch agent MEMORY.md boards if we have read scope
       if (gateway.hasScope('operator.read')) {
         console.log('[store] operator.read scope available — fetching agent boards');
         get().fetchAgentBoards();
-        // Start polling
         clearInterval(_boardPollTimer);
         _boardPollTimer = setInterval(() => get().fetchAgentBoards(), BOARD_POLL_INTERVAL_MS);
       } else {
         console.log('[store] No operator.read scope — agent board sync unavailable');
       }
-    });
+    }));
 
     // Live event: health updates (channels, agents)
-    gateway.on('health', (payload) => {
+    _eventCleanups.push(gateway.on('health', (payload) => {
       const liveAgents = payload?.agents || [];
       set((state) => ({
         gatewayInfo: {
@@ -249,13 +252,12 @@ const useStore = create((set, get) => ({
           };
         }),
       }));
-    });
+    }));
 
     // Live event: agent activity (processing messages)
-    gateway.on('agent', (payload) => {
+    _eventCleanups.push(gateway.on('agent', (payload) => {
       const agentId = payload?.agentId;
       if (!agentId) return;
-      // agent events include: turn start/end, tool use, etc.
       const isActive = payload?.type === 'turn.start' || payload?.type === 'processing';
       const isDone = payload?.type === 'turn.end' || payload?.type === 'done' || payload?.type === 'idle';
       if (isActive) {
@@ -271,16 +273,13 @@ const useStore = create((set, get) => ({
           ),
         }));
       }
-    });
+    }));
 
-    // Live event: chat messages (streaming from agent processing)
-    gateway.on('chat', (payload) => {
-      // chat events contain streaming message data
-      // Only capture final/complete messages, not deltas
+    // Live event: chat messages
+    _eventCleanups.push(gateway.on('chat', (payload) => {
       if (!payload) return;
       const content = payload.text || payload.content;
       if (!content || typeof content !== 'string') return;
-      // Skip very short delta fragments
       if (content.length < 5 && !payload.final) return;
 
       const agentId = payload.agentId || payload.agent || 'orchestrator';
@@ -295,10 +294,10 @@ const useStore = create((set, get) => ({
         live: true,
       };
       set((state) => ({ messages: [...state.messages, msg] }));
-    });
+    }));
 
     // Live event: heartbeat results
-    gateway.on('heartbeat', (payload) => {
+    _eventCleanups.push(gateway.on('heartbeat', (payload) => {
       const agentId = payload?.agentId;
       if (!agentId) return;
       set((state) => ({
@@ -306,7 +305,7 @@ const useStore = create((set, get) => ({
           a.id === agentId ? { ...a, lastHeartbeat: payload.ts || Date.now() } : a
         ),
       }));
-    });
+    }));
 
     gateway.connect(url, token);
   },
@@ -314,6 +313,8 @@ const useStore = create((set, get) => ({
   disconnectGateway: () => {
     clearInterval(_boardPollTimer);
     _boardPollTimer = null;
+    _eventCleanups.forEach((fn) => fn());
+    _eventCleanups = [];
     gateway.disconnect();
     set({
       connectionStatus: 'disconnected',
@@ -323,22 +324,28 @@ const useStore = create((set, get) => ({
     });
   },
 
-  // Fetch BOARD.md from all agent workspaces and merge into task list
+  // Fetch MEMORY.md from agent workspaces and parse board/task sections
   fetchAgentBoards: async () => {
     if (!gateway.hasScope('operator.read')) return;
 
     const agentIds = AGENTS.map((a) => a.id);
     const allAgentTasks = [];
 
-    for (const agentId of agentIds) {
-      try {
+    // Fetch in parallel (all 7 agents at once) to reduce latency
+    const results = await Promise.allSettled(
+      agentIds.map(async (agentId) => {
         const result = await gateway.agentFilesGet(agentId, BOARD_FILE_NAME);
         if (result?.file && !result.file.missing && result.file.content) {
-          const tasks = parseBoard(result.file.content, agentId);
-          allAgentTasks.push(...tasks);
+          return { agentId, content: result.file.content };
         }
-      } catch {
-        // Agent may not have a BOARD.md — that's fine
+        return null;
+      })
+    );
+
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value) {
+        const tasks = parseBoard(r.value.content, r.value.agentId);
+        allAgentTasks.push(...tasks);
       }
     }
 
