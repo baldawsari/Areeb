@@ -59,6 +59,20 @@ function parseTableRows(lines) {
 }
 
 /**
+ * Extract an agent ID from an "Assigned To" column value.
+ * Handles formats like "@analyst", "analyst", "@scrum-master", "developer".
+ * Returns the cleaned agent ID or null if not parseable.
+ */
+function extractAgentFromAssignment(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const cleaned = raw.trim().replace(/^@/, '').toLowerCase();
+  // Known agent IDs
+  const KNOWN_AGENTS = ['orchestrator', 'analyst', 'pm', 'architect', 'developer', 'tester', 'scrum-master'];
+  if (KNOWN_AGENTS.includes(cleaned)) return cleaned;
+  return null;
+}
+
+/**
  * Parse BOARD.md content into an array of task objects.
  * @param {string} markdown - Raw BOARD.md content
  * @param {string} agentId - The agent that owns this board (e.g. "scrum-master")
@@ -77,12 +91,13 @@ export function parseBoard(markdown, agentId = 'scrum-master') {
     if (!sectionLines.length) return;
     const rows = parseTableRows(sectionLines);
     for (const cells of rows) {
-      // Expected columns: # | Task | Added | Status
-      // But be flexible — at minimum need index and task name
+      // Expected columns: # | Task | Added | Status | [Assigned To]
+      // The 5th column (Assigned To) is optional — if present, use it for agent assignment
       const num = cells[0];
       const title = cells[1] || '';
       const added = cells[2] || '';
       const statusRaw = cells[3] || '';
+      const assignedRaw = cells[4] || '';
 
       if (!title) continue;
 
@@ -94,14 +109,17 @@ export function parseBoard(markdown, agentId = 'scrum-master') {
             ? 'backlog'
             : 'todo';
 
+      // Use "Assigned To" column if present, otherwise fall back to the board owner agent
+      const assignedAgent = extractAgentFromAssignment(assignedRaw) || agentId;
+
       tasks.push({
-        id: `agent-${agentId}-${currentSprint || 'board'}-${num}`,
+        id: `agent-${assignedAgent}-${currentSprint || 'board'}-${num}`,
         title: title.trim(),
         description: '',
         status,
-        agent: agentId,
+        agent: assignedAgent,
         priority: 'medium',
-        workflow: currentSprint ? `Sprint ${currentSprint}` : 'Backlog',
+        workflow: currentSprint === '0' ? 'Active' : currentSprint ? `Sprint ${currentSprint}` : 'Backlog',
         createdAt: added ? new Date(added + 'T00:00:00Z').toISOString() : new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         source: 'agent',
@@ -116,11 +134,19 @@ export function parseBoard(markdown, agentId = 'scrum-master') {
     const sprintMatch = line.match(/##\s*.*Sprint\s+(\d+)/i);
     const backlogMatch = line.match(/##\s*.*Backlog/i);
     const doneMatch = line.match(/##\s*.*Done/i);
+    // Individual agents use "## 📋 Current Tasks" as their active task section
+    const currentTasksMatch = line.match(/##\s*.*Current\s+Tasks/i);
 
     if (sprintMatch) {
       flushSection();
       currentSection = 'sprint';
       currentSprint = sprintMatch[1];
+    } else if (currentTasksMatch) {
+      // Treat "Current Tasks" as an active sprint section so individual agent tasks
+      // are parsed with in-progress context (status comes from the table itself)
+      flushSection();
+      currentSection = 'sprint';
+      currentSprint = '0'; // virtual sprint number for individual agent boards
     } else if (backlogMatch) {
       flushSection();
       currentSection = 'backlog';

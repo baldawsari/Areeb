@@ -78,6 +78,7 @@ export default function MessageFeed() {
           onChange={(e) => setFilterFrom(e.target.value)}
         >
           <option value="">All senders</option>
+          <option value="user">&#128100; User</option>
           {agents.map((a) => (
             <option key={a.id} value={a.id}>
               {a.icon} {a.name}
@@ -91,6 +92,7 @@ export default function MessageFeed() {
           onChange={(e) => setFilterTo(e.target.value)}
         >
           <option value="">All recipients</option>
+          <option value="user">&#128100; User</option>
           {agents.map((a) => (
             <option key={a.id} value={a.id}>
               {a.icon} {a.name}
@@ -133,6 +135,11 @@ export default function MessageFeed() {
                 >
                   {typeStyle.label}
                 </span>
+                {msg.live === false && (
+                  <span className="text-xs px-1 py-0 rounded bg-surface-700/40 text-surface-500">
+                    history
+                  </span>
+                )}
                 <span className="text-xs text-surface-600 ml-auto">
                   {formatTime(msg.timestamp)}
                 </span>
@@ -145,8 +152,12 @@ export default function MessageFeed() {
         })}
 
         {filtered.length === 0 && (
-          <div className="flex items-center justify-center h-full text-surface-600 text-sm">
-            No messages found
+          <div className="flex flex-col items-center justify-center h-full text-surface-600 text-sm gap-2">
+            <span>No messages yet</span>
+            <span className="text-xs text-surface-700">
+              Messages appear when agents process tasks via Telegram or inter-agent routing.
+              Agent activity events (turn start/end, handoffs) are captured automatically.
+            </span>
           </div>
         )}
       </div>

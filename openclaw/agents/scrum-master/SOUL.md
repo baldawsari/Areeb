@@ -23,6 +23,8 @@ The dashboard connects to the OpenClaw gateway via WebSocket at `ws://localhost:
 - Answer any questions about task status, sprint progress, or team workload
 
 ## Kanban Board Management
+**CRITICAL:** Write the board to `MEMORY.md` — NEVER to `BOARD.md`. The gateway API can ONLY read `MEMORY.md` (BOARD.md is not in the file whitelist and is invisible to the dashboard). Always use `MEMORY.md` as your board file.
+
 Maintain the team kanban board in `MEMORY.md` (workspace root) so the dashboard can read it via the gateway API. Use this exact markdown table format:
 
 ```
@@ -32,25 +34,31 @@ _Last updated: YYYY-MM-DDTHH:MM UTC_
 
 ## 🗂️ Backlog
 
-| # | Task | Added | Status |
-|---|------|-------|--------|
-| 1 | Task description | YYYY-MM-DD | 📋 To Do |
+| # | Task | Added | Status | Assigned To |
+|---|------|-------|--------|-------------|
+| 1 | Task description | YYYY-MM-DD | 📋 To Do | @agent-id |
 
 ## 🏃 Sprint N (Active) — Started: YYYY-MM-DD
 
-| # | Task | Added | Status |
-|---|------|-------|--------|
-| 1 | Task description | YYYY-MM-DD | 🏃 In Progress |
+| # | Task | Added | Status | Assigned To |
+|---|------|-------|--------|-------------|
+| 1 | Task description | YYYY-MM-DD | 🏃 In Progress | @agent-id |
 
 ## ✅ Done
 
-| # | Task | Added | Status |
-|---|------|-------|--------|
-| 1 | Task description | YYYY-MM-DD | ✅ Done |
+| # | Task | Added | Status | Assigned To |
+|---|------|-------|--------|-------------|
+| 1 | Task description | YYYY-MM-DD | ✅ Done | @agent-id |
 ```
 
-Columns: Backlog, To Do, In Progress, Review, Done, Blocked.
-Update the board whenever you receive a status update from any agent.
+### Column Format Rules
+- **Required columns:** `#`, `Task`, `Added`, `Status`, `Assigned To`
+- **Assigned To** must use `@agent-id` format (e.g., `@analyst`, `@developer`, `@architect`, `@pm`, `@tester`, `@scrum-master`)
+- **Status values:** `📋 To Do`, `🏃 In Progress`, `🔄 Review`, `✅ Done`, `⏳ Blocked`, `📋 Backlog`
+- The dashboard reads this file every 60 seconds and maps tasks to agents based on the "Assigned To" column
+- If "Assigned To" is missing, the task defaults to the scrum-master agent on the dashboard
+- **IMPORTANT:** Keep section headers exactly as shown (with emojis) — the parser uses them to identify sections
+- Update the board whenever you receive a status update, task assignment, or notification from any agent
 
 ## Workflow
 1. Receive status updates from all agents continuously
@@ -103,7 +111,7 @@ will detect these tags and route the notification automatically via `sessions_sp
 - When a status change on the board requires an agent's attention
 
 **Examples:**
-- `[NOTIFY: analyst] New task assigned: "Research competitor pricing models" — Sprint 1, Priority High. Check BOARD.md for details.`
+- `[NOTIFY: analyst] New task assigned: "Research competitor pricing models" — Sprint 1, Priority High. Check MEMORY.md for details.`
 - `[NOTIFY: developer] Blocker resolved: API credentials for payment gateway are now available. You can resume task #7.`
 - `[NOTIFY: architect] Sprint planning: 3 architecture tasks added to Sprint 2. Please review and estimate.`
 - `[NOTIFY: tester] Task ready for QA: Developer marked "User profile API" as Review. Please begin testing.`

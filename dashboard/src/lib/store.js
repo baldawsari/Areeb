@@ -12,150 +12,15 @@ const BOARD_POLL_INTERVAL_MS = 60_000; // poll every 60s
 // Board/task data lives in MEMORY.md (BOARD.md is NOT in the gateway whitelist).
 const BOARD_FILE_NAME = 'MEMORY.md';
 
-const SAMPLE_TASKS = [
-  {
-    id: 'task-1',
-    title: 'Gather requirements for user auth module',
-    description: 'Interview stakeholders and document functional and non-functional requirements for the authentication system including OAuth2, SSO, and MFA flows.',
-    status: 'done',
-    agent: 'analyst',
-    priority: 'high',
-    workflow: 'Authentication System',
-    createdAt: '2026-02-20T09:00:00Z',
-    updatedAt: '2026-02-21T14:30:00Z',
-  },
-  {
-    id: 'task-2',
-    title: 'Define product roadmap for Q1',
-    description: 'Create a detailed product roadmap covering features, milestones, and deliverables for Q1 2026 based on stakeholder input and market analysis.',
-    status: 'review',
-    agent: 'pm',
-    priority: 'critical',
-    workflow: 'Sprint Planning',
-    createdAt: '2026-02-19T10:00:00Z',
-    updatedAt: '2026-02-22T11:00:00Z',
-  },
-  {
-    id: 'task-3',
-    title: 'Design microservices architecture',
-    description: 'Architect the system using microservices patterns. Define service boundaries, API contracts, data ownership, and communication protocols.',
-    status: 'in-progress',
-    agent: 'architect',
-    priority: 'critical',
-    workflow: 'Authentication System',
-    createdAt: '2026-02-21T08:00:00Z',
-    updatedAt: '2026-02-23T09:15:00Z',
-  },
-  {
-    id: 'task-4',
-    title: 'Implement JWT token service',
-    description: 'Build the JWT token generation, validation, and refresh service with RS256 signing. Includes token blacklisting and rotation policies.',
-    status: 'in-progress',
-    agent: 'developer',
-    priority: 'high',
-    workflow: 'Authentication System',
-    createdAt: '2026-02-22T09:00:00Z',
-    updatedAt: '2026-02-23T10:30:00Z',
-  },
-  {
-    id: 'task-5',
-    title: 'Write integration tests for auth API',
-    description: 'Create comprehensive integration test suite for authentication endpoints covering login, registration, token refresh, password reset, and MFA verification.',
-    status: 'todo',
-    agent: 'tester',
-    priority: 'high',
-    workflow: 'Authentication System',
-    createdAt: '2026-02-22T14:00:00Z',
-    updatedAt: '2026-02-22T14:00:00Z',
-  },
-  {
-    id: 'task-6',
-    title: 'Sprint retrospective - Sprint 4',
-    description: 'Facilitate the sprint retrospective meeting. Collect team feedback, identify improvements, and create action items for Sprint 5.',
-    status: 'todo',
-    agent: 'scrum-master',
-    priority: 'medium',
-    workflow: 'Sprint Planning',
-    createdAt: '2026-02-23T08:00:00Z',
-    updatedAt: '2026-02-23T08:00:00Z',
-  },
-  {
-    id: 'task-7',
-    title: 'Database schema design for user profiles',
-    description: 'Design the relational database schema for user profiles, roles, permissions, and session management with proper indexing strategies.',
-    status: 'review',
-    agent: 'architect',
-    priority: 'high',
-    workflow: 'Authentication System',
-    createdAt: '2026-02-20T11:00:00Z',
-    updatedAt: '2026-02-22T16:00:00Z',
-  },
-  {
-    id: 'task-8',
-    title: 'Build user registration flow',
-    description: 'Implement the complete user registration flow including email verification, input validation, and welcome email integration.',
-    status: 'todo',
-    agent: 'developer',
-    priority: 'medium',
-    workflow: 'Authentication System',
-    createdAt: '2026-02-23T07:00:00Z',
-    updatedAt: '2026-02-23T07:00:00Z',
-  },
-  {
-    id: 'task-9',
-    title: 'Competitive analysis report',
-    description: 'Research competitor products, compile feature comparison matrix, and provide recommendations for differentiation strategy.',
-    status: 'backlog',
-    agent: 'analyst',
-    priority: 'low',
-    workflow: 'Market Research',
-    createdAt: '2026-02-18T09:00:00Z',
-    updatedAt: '2026-02-18T09:00:00Z',
-  },
-  {
-    id: 'task-10',
-    title: 'Setup CI/CD pipeline',
-    description: 'Configure GitHub Actions workflows for automated testing, linting, building, and deployment to staging and production environments.',
-    status: 'backlog',
-    agent: 'developer',
-    priority: 'medium',
-    workflow: 'DevOps',
-    createdAt: '2026-02-17T10:00:00Z',
-    updatedAt: '2026-02-17T10:00:00Z',
-  },
-  {
-    id: 'task-11',
-    title: 'Performance test plan',
-    description: 'Create a comprehensive performance testing plan including load testing, stress testing, and endurance testing strategies for the auth system.',
-    status: 'backlog',
-    agent: 'tester',
-    priority: 'low',
-    workflow: 'Authentication System',
-    createdAt: '2026-02-19T15:00:00Z',
-    updatedAt: '2026-02-19T15:00:00Z',
-  },
-  {
-    id: 'task-12',
-    title: 'Define sprint velocity metrics',
-    description: 'Establish velocity tracking metrics, burndown chart parameters, and team capacity planning formulas for sprint forecasting.',
-    status: 'done',
-    agent: 'scrum-master',
-    priority: 'medium',
-    workflow: 'Sprint Planning',
-    createdAt: '2026-02-16T08:00:00Z',
-    updatedAt: '2026-02-19T12:00:00Z',
-  },
-];
-
 function loadTasks() {
   try {
     const raw = localStorage.getItem(TASKS_STORAGE_KEY);
     if (raw) {
       const tasks = JSON.parse(raw);
-      if (Array.isArray(tasks) && tasks.length > 0) return tasks;
+      if (Array.isArray(tasks)) return tasks.filter((t) => t.source === 'agent');
     }
   } catch {}
-  return SAMPLE_TASKS;
+  return [];
 }
 
 function saveTasks(tasks) {
@@ -226,8 +91,9 @@ const useStore = create((set, get) => ({
 
       // Fetch agent MEMORY.md boards if we have read scope
       if (gateway.hasScope('operator.read')) {
-        console.log('[store] operator.read scope available — fetching agent boards');
+        console.log('[store] operator.read scope available — fetching agent boards + chat history');
         get().fetchAgentBoards();
+        get().fetchChatHistory();
         clearInterval(_boardPollTimer);
         _boardPollTimer = setInterval(() => get().fetchAgentBoards(), BOARD_POLL_INTERVAL_MS);
       } else {
@@ -255,11 +121,14 @@ const useStore = create((set, get) => ({
     }));
 
     // Live event: agent activity (processing messages)
+    // Also generates inter-agent communication messages for the MessageFeed
     _eventCleanups.push(gateway.on('agent', (payload) => {
       const agentId = payload?.agentId;
       if (!agentId) return;
-      const isActive = payload?.type === 'turn.start' || payload?.type === 'processing';
-      const isDone = payload?.type === 'turn.end' || payload?.type === 'done' || payload?.type === 'idle';
+      const eventType = payload?.type;
+      const isActive = eventType === 'turn.start' || eventType === 'processing';
+      const isDone = eventType === 'turn.end' || eventType === 'done' || eventType === 'idle';
+
       if (isActive) {
         set((state) => ({
           agents: state.agents.map((a) =>
@@ -273,9 +142,73 @@ const useStore = create((set, get) => ({
           ),
         }));
       }
+
+      // Generate activity messages for the MessageFeed from agent events.
+      // This captures inter-agent routing (sessions_spawn) which does not emit
+      // standard chat events visible to WebSocket observers.
+      if (eventType === 'turn.start' || eventType === 'turn.end') {
+        // Parse sessionKey to detect inter-agent sessions vs. user-facing sessions
+        // Session key format: agent:{agentId}:{channel}:{chatType}:{identifier}
+        const sessionKey = payload?.sessionKey || payload?.session || '';
+        const channel = sessionKey.split(':')[2] || '';
+
+        // For agent-to-agent spawned sessions the channel is typically 'main' or
+        // contains the spawning agent's context. We generate an activity message
+        // for all turn events to show agent activity in the feed.
+        const toolName = payload?.tool || payload?.toolName || '';
+        const isSpawn = toolName === 'sessions_spawn' || toolName === 'sessions_send';
+
+        let content, msgType, from, to;
+
+        if (eventType === 'turn.start') {
+          content = `Agent activated${channel ? ` (session: ${channel})` : ''}`;
+          msgType = 'status';
+          from = agentId;
+          to = 'orchestrator';
+        } else if (eventType === 'turn.end') {
+          content = `Agent completed turn${channel ? ` (session: ${channel})` : ''}`;
+          msgType = 'status';
+          from = agentId;
+          to = 'orchestrator';
+        }
+
+        if (content) {
+          const msg = {
+            id: `agent-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            from,
+            to,
+            content,
+            timestamp: payload.timestamp || payload.ts || new Date().toISOString(),
+            type: msgType,
+            live: true,
+          };
+          set((state) => ({ messages: [...state.messages, msg] }));
+        }
+      }
+
+      // Capture tool-use events that indicate inter-agent handoffs
+      if (eventType === 'tool.start' || eventType === 'tool_use') {
+        const toolName = payload?.tool || payload?.toolName || payload?.name || '';
+        if (toolName === 'sessions_spawn' || toolName === 'sessions_send') {
+          const targetAgent = payload?.input?.agentId || payload?.params?.agentId || 'unknown';
+          const task = payload?.input?.task || payload?.params?.task || '';
+          const preview = task.length > 120 ? task.slice(0, 120) + '...' : task;
+          const msg = {
+            id: `handoff-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            from: agentId,
+            to: targetAgent,
+            content: preview || `Routing to ${targetAgent}`,
+            timestamp: payload.timestamp || payload.ts || new Date().toISOString(),
+            type: 'handoff',
+            live: true,
+          };
+          set((state) => ({ messages: [...state.messages, msg] }));
+        }
+      }
     }));
 
     // Live event: chat messages
+    // Captures both user-facing and inter-agent chat events
     _eventCleanups.push(gateway.on('chat', (payload) => {
       if (!payload) return;
       const content = payload.text || payload.content;
@@ -284,13 +217,39 @@ const useStore = create((set, get) => ({
 
       const agentId = payload.agentId || payload.agent || 'orchestrator';
       const isFromUser = payload.role === 'user';
+
+      // Detect inter-agent sessions from sessionKey or provenance
+      // Session key format: agent:{agentId}:{channel}:{chatType}:{identifier}
+      const sessionKey = payload.sessionKey || payload.session || '';
+      const sessionParts = sessionKey.split(':');
+      const sessionChannel = sessionParts[2] || '';
+      const provenanceKind = payload.provenance?.kind || '';
+      const isInterAgent = provenanceKind === 'inter_session' ||
+        (sessionChannel === 'main' && !isFromUser && agentId !== 'orchestrator');
+
+      let msgType, from, to;
+      if (isInterAgent) {
+        // Inter-agent message: agent responding to a spawned session
+        from = agentId;
+        to = 'orchestrator';
+        msgType = 'response';
+      } else if (isFromUser) {
+        from = 'user';
+        to = agentId;
+        msgType = 'directive';
+      } else {
+        from = agentId;
+        to = 'user';
+        msgType = 'response';
+      }
+
       const msg = {
         id: `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        from: isFromUser ? 'user' : agentId,
-        to: isFromUser ? agentId : 'user',
+        from,
+        to,
         content,
         timestamp: payload.timestamp || new Date().toISOString(),
-        type: isFromUser ? 'directive' : 'response',
+        type: msgType,
         live: true,
       };
       set((state) => ({ messages: [...state.messages, msg] }));
@@ -356,6 +315,79 @@ const useStore = create((set, get) => ({
         return { tasks: merged };
       });
       console.log(`[store] Synced ${allAgentTasks.length} tasks from agent boards`);
+    }
+  },
+
+  fetchChatHistory: async () => {
+    try {
+      const sessionsResult = await gateway.sessionsList();
+      const sessions = sessionsResult?.sessions || sessionsResult || [];
+      if (!Array.isArray(sessions) || sessions.length === 0) {
+        console.log('[store] No sessions found for chat history');
+        return;
+      }
+
+      const recentSessions = sessions.slice(-25);
+      const historyMessages = [];
+      const seen = new Set();
+
+      const results = await Promise.allSettled(
+        recentSessions.map(async (session) => {
+          const key = typeof session === 'string' ? session : session.sessionKey || session.key || '';
+          if (!key) return null;
+          try {
+            const historyResult = await gateway.chatHistory(key);
+            const messages = historyResult?.messages || historyResult || [];
+            if (!Array.isArray(messages)) return null;
+            return { sessionKey: key, messages };
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      for (const r of results) {
+        if (r.status !== 'fulfilled' || !r.value) continue;
+        const { sessionKey, messages } = r.value;
+        const keyParts = sessionKey.split(':');
+        const agentId = keyParts[1] || 'orchestrator';
+
+        for (const msg of messages) {
+          const content = typeof msg.content === 'string'
+            ? msg.content
+            : Array.isArray(msg.content)
+              ? msg.content.map((b) => (typeof b === 'string' ? b : b.text || '')).join('')
+              : '';
+          if (!content || content.length < 3) continue;
+
+          const dedupKey = `${msg.role}-${agentId}-${content.slice(0, 80)}-${msg.timestamp || ''}`;
+          if (seen.has(dedupKey)) continue;
+          seen.add(dedupKey);
+
+          const isUser = msg.role === 'user';
+          const preview = content.length > 500 ? content.slice(0, 500) + '...' : content;
+
+          historyMessages.push({
+            id: `hist-${agentId}-${historyMessages.length}-${Math.random().toString(36).slice(2, 6)}`,
+            from: isUser ? 'user' : agentId,
+            to: isUser ? agentId : 'user',
+            content: preview,
+            timestamp: msg.timestamp || msg.ts || new Date().toISOString(),
+            type: isUser ? 'directive' : 'response',
+            live: false,
+          });
+        }
+      }
+
+      if (historyMessages.length > 0) {
+        historyMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        set((state) => ({
+          messages: [...historyMessages, ...state.messages.filter((m) => m.live)],
+        }));
+        console.log(`[store] Loaded ${historyMessages.length} historical messages from ${recentSessions.length} sessions`);
+      }
+    } catch (err) {
+      console.warn('[store] Failed to fetch chat history:', err.message);
     }
   },
 
