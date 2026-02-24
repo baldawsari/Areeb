@@ -37,8 +37,10 @@ export default function Header({ onToggleSidebar }) {
     return () => disconnectGateway();
   }, []);
 
+  const gatewayInfo = useStore((s) => s.gatewayInfo);
   const activeTasks = tasks.filter((t) => t.status === 'in-progress').length;
   const recentMessages = messages.slice(-3).reverse();
+  const telegramStatus = gatewayInfo?.channels?.telegram;
 
   const connCfg = CONNECTION_STATUS[connectionStatus] || CONNECTION_STATUS.disconnected;
   const ConnIcon = connCfg.Icon;
@@ -84,7 +86,9 @@ export default function Header({ onToggleSidebar }) {
             if (connectionStatus === 'connected') {
               disconnectGateway();
             } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
-              connectGateway();
+              const url = import.meta.env.VITE_GATEWAY_URL || 'ws://localhost:18789';
+              const token = import.meta.env.VITE_GATEWAY_TOKEN || '';
+              connectGateway(url, token);
             }
           }}
           className={`flex items-center gap-1.5 px-2.5 py-1 ${connCfg.bg} border ${connCfg.border} rounded-full cursor-pointer hover:opacity-80 transition-opacity`}
@@ -105,6 +109,28 @@ export default function Header({ onToggleSidebar }) {
           />
         </div>
 
+        {connectionStatus === 'connected' && telegramStatus && (
+          <div
+            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+              telegramStatus.running
+                ? 'bg-green-500/10 border border-green-500/20'
+                : telegramStatus.configured
+                  ? 'bg-yellow-500/10 border border-yellow-500/20'
+                  : 'bg-surface-500/10 border border-surface-500/20'
+            }`}
+            title={telegramStatus.running ? 'Telegram bot active' : telegramStatus.configured ? 'Telegram configured but stopped' : 'Telegram not configured'}
+          >
+            <span className="text-xs">
+              {telegramStatus.running ? '\u2705' : telegramStatus.configured ? '\u26A0\uFE0F' : '\u274C'}
+            </span>
+            <span className={`text-xs font-medium ${
+              telegramStatus.running ? 'text-green-400' : telegramStatus.configured ? 'text-yellow-400' : 'text-surface-400'
+            }`}>
+              TG
+            </span>
+          </div>
+        )}
+
         {activeTasks > 0 && (
           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full">
             <Activity size={14} className="text-blue-400 animate-pulse" />
@@ -120,7 +146,9 @@ export default function Header({ onToggleSidebar }) {
             className="relative p-2 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors"
           >
             <Bell size={18} />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
+            {messages.length > 0 && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
+            )}
           </button>
 
           {showNotifications && (

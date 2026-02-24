@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { AGENTS } from './agents';
 import gateway from './gateway';
 
+// --- localStorage persistence for tasks ---
+const TASKS_STORAGE_KEY = 'areeb-dashboard-tasks';
+
 const SAMPLE_TASKS = [
   {
     id: 'task-1',
@@ -137,107 +140,31 @@ const SAMPLE_TASKS = [
   },
 ];
 
-const SAMPLE_MESSAGES = [
-  {
-    id: 'msg-1',
-    from: 'analyst',
-    to: 'pm',
-    content: 'Requirements document for the auth module is finalized. Key stakeholders approved the MFA and SSO requirements. Ready for roadmap prioritization.',
-    timestamp: '2026-02-23T09:00:00Z',
-    type: 'handoff',
-  },
-  {
-    id: 'msg-2',
-    from: 'pm',
-    to: 'architect',
-    content: 'Auth module is our top priority for Q1. Please start with the microservices architecture design. We need OAuth2 + OIDC support from day one.',
-    timestamp: '2026-02-23T09:15:00Z',
-    type: 'directive',
-  },
-  {
-    id: 'msg-3',
-    from: 'architect',
-    to: 'developer',
-    content: 'Architecture design is in progress. Starting with the JWT token service - I\'ve shared the API contract in the shared memory. Use RS256 for signing.',
-    timestamp: '2026-02-23T09:30:00Z',
-    type: 'handoff',
-  },
-  {
-    id: 'msg-4',
-    from: 'developer',
-    to: 'architect',
-    content: 'Got it. Quick question - should we use a separate Redis instance for token blacklisting, or can we leverage the existing cache layer?',
-    timestamp: '2026-02-23T09:45:00Z',
-    type: 'question',
-  },
-  {
-    id: 'msg-5',
-    from: 'architect',
-    to: 'developer',
-    content: 'Use a dedicated Redis instance for token blacklisting. We need isolation for security-critical operations. I\'ll update the infra diagram.',
-    timestamp: '2026-02-23T10:00:00Z',
-    type: 'response',
-  },
-  {
-    id: 'msg-6',
-    from: 'scrum-master',
-    to: 'pm',
-    content: 'Sprint 4 velocity is tracking at 34 story points. We\'re on pace to complete all committed items. Retrospective scheduled for Friday.',
-    timestamp: '2026-02-23T10:15:00Z',
-    type: 'status',
-  },
-  {
-    id: 'msg-7',
-    from: 'tester',
-    to: 'developer',
-    content: 'I\'ve prepared the integration test framework for the auth API. Will need access to a test environment once the JWT service is ready.',
-    timestamp: '2026-02-23T10:30:00Z',
-    type: 'info',
-  },
-  {
-    id: 'msg-8',
-    from: 'pm',
-    to: 'scrum-master',
-    content: 'Great velocity numbers! Let\'s discuss capacity for Sprint 5 in the retro. We have the registration flow and CI/CD pipeline to plan.',
-    timestamp: '2026-02-23T10:45:00Z',
-    type: 'response',
-  },
-];
-
-const initialAgents = AGENTS.map((agent) => {
-  const currentTask = SAMPLE_TASKS.find(
-    (t) => t.agent === agent.id && t.status === 'in-progress'
-  );
-  const isWorking = currentTask !== undefined;
-  const isReviewing = SAMPLE_TASKS.some(
-    (t) => t.agent === agent.id && t.status === 'review'
-  );
-  return {
-    ...agent,
-    status: isWorking ? 'working' : isReviewing ? 'reviewing' : 'idle',
-    currentTask: currentTask ? currentTask.id : null,
-    messageCount: SAMPLE_MESSAGES.filter(
-      (m) => m.to === agent.id || m.from === agent.id
-    ).length,
-  };
-});
-
-// Map a gateway session event to a dashboard message
-function mapSessionMessage(payload) {
-  const agentId = payload.agentId || payload.agent || 'analyst';
-  const isFromUser = payload.role === 'user';
-  return {
-    id: `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    from: isFromUser ? 'user' : agentId,
-    to: isFromUser ? agentId : 'user',
-    content: typeof payload.content === 'string'
-      ? payload.content
-      : payload.text || JSON.stringify(payload.content || ''),
-    timestamp: payload.timestamp || new Date().toISOString(),
-    type: isFromUser ? 'directive' : 'response',
-    live: true,
-  };
+function loadTasks() {
+  try {
+    const raw = localStorage.getItem(TASKS_STORAGE_KEY);
+    if (raw) {
+      const tasks = JSON.parse(raw);
+      if (Array.isArray(tasks) && tasks.length > 0) return tasks;
+    }
+  } catch {}
+  return SAMPLE_TASKS;
 }
+
+function saveTasks(tasks) {
+  try {
+    localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+  } catch {}
+}
+
+// Build initial agent state from static AGENTS list
+const initialAgents = AGENTS.map((agent) => ({
+  ...agent,
+  status: 'idle',
+  currentTask: null,
+  messageCount: 0,
+  sessionCount: 0,
+}));
 
 const useStore = create((set, get) => ({
   // Gateway connection
@@ -246,8 +173,8 @@ const useStore = create((set, get) => ({
 
   // Data
   agents: initialAgents,
-  tasks: SAMPLE_TASKS,
-  messages: SAMPLE_MESSAGES,
+  tasks: loadTasks(),
+  messages: [],
   filterAgent: null,
   filterWorkflow: null,
   selectedTask: null,
@@ -258,70 +185,107 @@ const useStore = create((set, get) => ({
       set({ connectionStatus: status });
     });
 
-    gateway.on('connected', async () => {
-      try {
-        const [health, channels] = await Promise.allSettled([
-          gateway.health(),
-          gateway.channelsStatus(),
-        ]);
-        set({
-          gatewayInfo: {
-            health: health.status === 'fulfilled' ? health.value : null,
-            channels: channels.status === 'fulfilled' ? channels.value : null,
-          },
-        });
-      } catch {}
+    // On successful connect, populate from snapshot
+    gateway.on('connected', (helloOk) => {
+      const snapshot = helloOk?.snapshot;
+      if (!snapshot) return;
 
-      // Fetch sessions and build live message history
-      try {
-        const sessions = await gateway.listSessions();
-        if (sessions?.sessions?.length) {
-          const liveMessages = [];
-          for (const session of sessions.sessions.slice(0, 10)) {
-            try {
-              const history = await gateway.sessionHistory(session.key || session.id);
-              if (history?.messages) {
-                for (const msg of history.messages) {
-                  liveMessages.push(mapSessionMessage({ ...msg, agentId: session.agentId }));
-                }
-              }
-            } catch {}
-          }
-          if (liveMessages.length > 0) {
-            liveMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            set({ messages: liveMessages });
-          }
-        }
-      } catch {}
+      // Update agents with live data from snapshot
+      const liveAgents = snapshot.health?.agents || [];
+      set((state) => ({
+        gatewayInfo: {
+          version: helloOk.server?.version,
+          uptime: snapshot.uptimeMs,
+          authMode: snapshot.authMode,
+          channels: snapshot.health?.channels || {},
+          channelOrder: snapshot.health?.channelOrder || [],
+        },
+        agents: state.agents.map((agent) => {
+          const live = liveAgents.find((a) => a.agentId === agent.id);
+          if (!live) return agent;
+          return {
+            ...agent,
+            sessionCount: live.sessions?.count || 0,
+            heartbeatEnabled: live.heartbeat?.enabled || false,
+          };
+        }),
+      }));
     });
 
-    // Live event: new session message
-    gateway.on('session.message', (payload) => {
-      const msg = mapSessionMessage(payload);
-      set((state) => ({ messages: [...state.messages, msg] }));
+    // Live event: health updates (channels, agents)
+    gateway.on('health', (payload) => {
+      const liveAgents = payload?.agents || [];
+      set((state) => ({
+        gatewayInfo: {
+          ...state.gatewayInfo,
+          channels: payload?.channels || state.gatewayInfo?.channels,
+        },
+        agents: state.agents.map((agent) => {
+          const live = liveAgents.find((a) => a.agentId === agent.id);
+          if (!live) return agent;
+          return {
+            ...agent,
+            sessionCount: live.sessions?.count || 0,
+          };
+        }),
+      }));
     });
 
-    // Live event: agent activity
-    gateway.on('agent.turn.start', (payload) => {
+    // Live event: agent activity (processing messages)
+    gateway.on('agent', (payload) => {
       const agentId = payload?.agentId;
-      if (agentId) {
+      if (!agentId) return;
+      // agent events include: turn start/end, tool use, etc.
+      const isActive = payload?.type === 'turn.start' || payload?.type === 'processing';
+      const isDone = payload?.type === 'turn.end' || payload?.type === 'done' || payload?.type === 'idle';
+      if (isActive) {
         set((state) => ({
           agents: state.agents.map((a) =>
             a.id === agentId ? { ...a, status: 'working' } : a
           ),
         }));
-      }
-    });
-
-    gateway.on('agent.turn.end', (payload) => {
-      const agentId = payload?.agentId;
-      if (agentId) {
+      } else if (isDone) {
         set((state) => ({
           agents: state.agents.map((a) =>
             a.id === agentId ? { ...a, status: 'idle' } : a
           ),
         }));
       }
+    });
+
+    // Live event: chat messages (streaming from agent processing)
+    gateway.on('chat', (payload) => {
+      // chat events contain streaming message data
+      // Only capture final/complete messages, not deltas
+      if (!payload) return;
+      const content = payload.text || payload.content;
+      if (!content || typeof content !== 'string') return;
+      // Skip very short delta fragments
+      if (content.length < 5 && !payload.final) return;
+
+      const agentId = payload.agentId || payload.agent || 'orchestrator';
+      const isFromUser = payload.role === 'user';
+      const msg = {
+        id: `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        from: isFromUser ? 'user' : agentId,
+        to: isFromUser ? agentId : 'user',
+        content,
+        timestamp: payload.timestamp || new Date().toISOString(),
+        type: isFromUser ? 'directive' : 'response',
+        live: true,
+      };
+      set((state) => ({ messages: [...state.messages, msg] }));
+    });
+
+    // Live event: heartbeat results
+    gateway.on('heartbeat', (payload) => {
+      const agentId = payload?.agentId;
+      if (!agentId) return;
+      set((state) => ({
+        agents: state.agents.map((a) =>
+          a.id === agentId ? { ...a, lastHeartbeat: payload.ts || Date.now() } : a
+        ),
+      }));
     });
 
     gateway.connect(url, token);
@@ -332,14 +296,15 @@ const useStore = create((set, get) => ({
     set({
       connectionStatus: 'disconnected',
       gatewayInfo: null,
-      messages: SAMPLE_MESSAGES,
+      messages: [],
+      agents: initialAgents,
     });
   },
 
-  // Task actions
+  // Task actions (persisted to localStorage)
   addTask: (task) =>
-    set((state) => ({
-      tasks: [
+    set((state) => {
+      const tasks = [
         ...state.tasks,
         {
           ...task,
@@ -347,26 +312,39 @@ const useStore = create((set, get) => ({
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
-      ],
-    })),
+      ];
+      saveTasks(tasks);
+      return { tasks };
+    }),
 
   moveTask: (taskId, newStatus) =>
-    set((state) => ({
-      tasks: state.tasks.map((t) =>
+    set((state) => {
+      const tasks = state.tasks.map((t) =>
         t.id === taskId
           ? { ...t, status: newStatus, updatedAt: new Date().toISOString() }
           : t
-      ),
-    })),
+      );
+      saveTasks(tasks);
+      return { tasks };
+    }),
 
   updateTaskStatus: (taskId, updates) =>
-    set((state) => ({
-      tasks: state.tasks.map((t) =>
+    set((state) => {
+      const tasks = state.tasks.map((t) =>
         t.id === taskId
           ? { ...t, ...updates, updatedAt: new Date().toISOString() }
           : t
-      ),
-    })),
+      );
+      saveTasks(tasks);
+      return { tasks };
+    }),
+
+  deleteTask: (taskId) =>
+    set((state) => {
+      const tasks = state.tasks.filter((t) => t.id !== taskId);
+      saveTasks(tasks);
+      return { tasks };
+    }),
 
   setSelectedTask: (taskId) => set({ selectedTask: taskId }),
 

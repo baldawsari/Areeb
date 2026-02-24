@@ -1,8 +1,18 @@
 export const AGENTS = [
   {
+    id: 'orchestrator',
+    name: 'Orchestrator',
+    model: 'sonnet-4.6',
+    color: '#6366F1',
+    icon: '\uD83C\uDFAF',
+    status: 'idle',
+    description: 'Front-door agent that triages incoming messages and routes to specialist agents.',
+    capabilities: ['Message Triage', 'Intent Classification', 'Agent Routing', 'Clarification'],
+  },
+  {
     id: 'analyst',
     name: 'Business Analyst',
-    model: 'opus-4.6',
+    model: 'sonnet-4.6',
     color: '#8B5CF6',
     icon: '\uD83D\uDD0D',
     status: 'idle',

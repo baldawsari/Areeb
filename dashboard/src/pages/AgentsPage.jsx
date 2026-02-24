@@ -195,10 +195,8 @@ export default function AgentsPage() {
                       </h4>
                       <div className="space-y-2 max-h-32 overflow-y-auto">
                         {agentMessages.slice(-4).reverse().map((msg) => {
-                          const otherAgent =
-                            msg.from === agent.id
-                              ? AGENT_MAP[msg.to]
-                              : AGENT_MAP[msg.from];
+                          const otherId = msg.from === agent.id ? msg.to : msg.from;
+                          const otherAgent = AGENT_MAP[otherId] || { id: otherId, name: otherId, color: '#6B7280' };
                           const isOutgoing = msg.from === agent.id;
                           return (
                             <div

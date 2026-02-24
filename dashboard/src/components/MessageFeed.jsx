@@ -3,8 +3,10 @@ import { Send, Filter, ArrowRight } from 'lucide-react';
 import useStore from '../lib/store';
 import { AGENT_MAP } from '../lib/agents';
 
-const USER_AGENT = { id: 'user', name: 'User', color: '#6B7280', icon: '\uD83D\uDC64' };
-const getAgent = (id) => AGENT_MAP[id] || { ...USER_AGENT, id, name: id };
+const FALLBACK_AGENTS = {
+  user: { id: 'user', name: 'User', color: '#6B7280', icon: '\uD83D\uDC64' },
+};
+const getAgent = (id) => AGENT_MAP[id] || FALLBACK_AGENTS[id] || { id, name: id, color: '#6B7280', icon: '\uD83D\uDCA1' };
 
 const MESSAGE_TYPE_STYLES = {
   handoff: { bg: 'bg-violet-500/10', border: 'border-violet-500/20', label: 'Handoff' },

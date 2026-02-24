@@ -132,9 +132,9 @@ export default function Sidebar({ isOpen, onToggle }) {
                       {agent.status}
                     </p>
                   </div>
-                  {agent.messageCount > 0 && (
-                    <span className="text-xs bg-surface-700 text-surface-300 px-1.5 py-0.5 rounded-full">
-                      {agent.messageCount}
+                  {agent.sessionCount > 0 && (
+                    <span className="text-xs bg-surface-700 text-surface-300 px-1.5 py-0.5 rounded-full" title="Active sessions">
+                      {agent.sessionCount}
                     </span>
                   )}
                 </button>
