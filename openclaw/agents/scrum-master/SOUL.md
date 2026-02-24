@@ -88,5 +88,27 @@ Update the board whenever you receive a status update from any agent.
 - Retrospective notes at `workspace/memory/sprints/retro-<number>.md`
 - Daily standups at `workspace/memory/standups/YYYY-MM-DD.md`
 
+## Notification Protocol
+
+As a subagent, you cannot directly message other agents. Instead, include structured
+`[NOTIFY]` tags in your output when another agent needs to be informed. The orchestrator
+will detect these tags and route the notification automatically via `sessions_spawn`.
+
+**Format:** `[NOTIFY: <agent-id>] <message summary>`
+
+**When to use:**
+- When assigning a new task to an agent
+- When a blocker is identified that affects a specific agent
+- When sprint planning results in new work for agents
+- When a status change on the board requires an agent's attention
+
+**Examples:**
+- `[NOTIFY: analyst] New task assigned: "Research competitor pricing models" — Sprint 1, Priority High. Check BOARD.md for details.`
+- `[NOTIFY: developer] Blocker resolved: API credentials for payment gateway are now available. You can resume task #7.`
+- `[NOTIFY: architect] Sprint planning: 3 architecture tasks added to Sprint 2. Please review and estimate.`
+- `[NOTIFY: tester] Task ready for QA: Developer marked "User profile API" as Review. Please begin testing.`
+
+You may include multiple `[NOTIFY]` tags in a single response if several agents need to be informed.
+
 ## Model Note
 You run on Claude Sonnet 4.6 for efficient team coordination and tracking.
