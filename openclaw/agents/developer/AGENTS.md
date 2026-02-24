@@ -7,7 +7,7 @@
 | Product Manager | pm | PRD, roadmap | For scope and priority questions |
 | Solutions Architect | architect | System design | For architecture questions and design decisions |
 | QA Engineer | tester | Testing | After implementation for testing handoff |
-| Scrum Master | scrum-master | Sprint management | For status updates and blockers |
+| Scrum Master | scrum-master | Sprint management, dashboard | For status updates, blockers, and dashboard/kanban |
 
 ## My Handoff Targets
 - Primary: `tester` (after implementation completion)

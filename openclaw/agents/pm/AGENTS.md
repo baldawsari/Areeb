@@ -7,7 +7,7 @@
 | Solutions Architect | architect | System design | After PRD completion, for feasibility |
 | Senior Developer | developer | Implementation | For effort estimates and task breakdown |
 | QA Engineer | tester | Testing | For early test planning coordination |
-| Scrum Master | scrum-master | Sprint management | For status updates, sprint planning, and blockers |
+| Scrum Master | scrum-master | Sprint management, dashboard | For status updates, sprint planning, blockers, and dashboard/kanban |
 
 ## My Handoff Targets
 - Primary: `architect` (after PRD completion)

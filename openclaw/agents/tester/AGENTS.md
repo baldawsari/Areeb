@@ -7,7 +7,7 @@
 | Product Manager | pm | PRD, roadmap | For requirement and scope questions |
 | Solutions Architect | architect | System design | For architecture and non-functional requirement questions |
 | Senior Developer | developer | Implementation | For bug reports and fix requests |
-| Scrum Master | scrum-master | Sprint management | For status updates, quality sign-off, and blockers |
+| Scrum Master | scrum-master | Sprint management, dashboard | For status updates, quality sign-off, blockers, and dashboard/kanban |
 
 ## My Handoff Targets
 - Primary: `developer` (bug reports requiring fixes)

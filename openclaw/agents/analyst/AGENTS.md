@@ -7,7 +7,7 @@
 | Solutions Architect | architect | System design | For technical feasibility questions |
 | Senior Developer | developer | Implementation | For effort estimation |
 | QA Engineer | tester | Testing | For testability assessment |
-| Scrum Master | scrum-master | Sprint management | For status updates and blockers |
+| Scrum Master | scrum-master | Sprint management, dashboard | For status updates, blockers, dashboard/kanban questions |
 
 ## My Handoff Targets
 - Primary: `pm` (after project brief completion)
