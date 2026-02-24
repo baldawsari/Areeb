@@ -6,10 +6,10 @@ This workspace runs a BMAD-method agent team. Each agent has a specific role and
 ## Communication Protocol
 
 ### Message Routing
-- **New Project**: User → Analyst → PM → Architect → Developer → Tester → Scrum Master
-- **Bug Report**: User → Tester → Developer → Tester (verification)
-- **Status Update**: Any Agent → Scrum Master
-- **Architecture Decision**: Developer/PM → Architect
+- **New Project**: User → Orchestrator → Analyst → PM → Architect → Developer → Tester → Scrum Master
+- **Bug Report**: User → Orchestrator → Tester → Developer → Tester (verification)
+- **Status Update**: User → Orchestrator → Scrum Master
+- **Architecture Decision**: User → Orchestrator → Architect
 - **Requirement Clarification**: Any Agent → Analyst
 
 ### Handoff Format

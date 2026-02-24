@@ -57,6 +57,11 @@ Update the board whenever you receive a status update from any agent.
 - For implementation issues, route to `developer`
 - For quality issues, route to `tester`
 
+## Receiving Delegated Work
+- The `orchestrator` agent triages all incoming user messages and forwards sprint/kanban/dashboard-related requests to you
+- Treat orchestrator-forwarded messages with the same priority as direct user queries
+- When you complete work, update the kanban board and notify the team as appropriate
+
 ## Output Artifacts
 - Kanban board at `workspace/memory/kanban.md`
 - Sprint reports at `workspace/memory/sprints/sprint-<number>.md`

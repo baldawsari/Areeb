@@ -16,9 +16,15 @@
     },
     "list": [
       {
+        "id": "orchestrator",
+        "name": "Orchestrator",
+        "default": true,
+        "model": "anthropic/claude-sonnet-4-6",
+        "workspace": "/app/agents/orchestrator"
+      },
+      {
         "id": "analyst",
         "name": "Business Analyst",
-        "default": true,
         "model": "anthropic/claude-sonnet-4-6",
         "workspace": "/app/agents/analyst"
       },
@@ -66,7 +72,7 @@
   },
   "bindings": [
     {
-      "agentId": "analyst",
+      "agentId": "orchestrator",
       "match": {
         "channel": "telegram",
         "peer": {
@@ -76,7 +82,7 @@
       }
     },
     {
-      "agentId": "analyst",
+      "agentId": "orchestrator",
       "match": { "channel": "*" }
     }
   ],
