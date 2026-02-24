@@ -8,6 +8,15 @@
       "token": "${OPENCLAW_GATEWAY_TOKEN}"
     }
   },
+  "tools": {
+    "sessions": {
+      "visibility": "all"
+    },
+    "agentToAgent": {
+      "enabled": true,
+      "allow": ["orchestrator", "analyst", "pm", "architect", "developer", "tester", "scrum-master"]
+    }
+  },
   "agents": {
     "defaults": {
       "contextPruning": { "mode": "cache-ttl", "ttl": "1h" },
@@ -20,7 +29,10 @@
         "name": "Orchestrator",
         "default": true,
         "model": "anthropic/claude-sonnet-4-6",
-        "workspace": "/app/agents/orchestrator"
+        "workspace": "/app/agents/orchestrator",
+        "subagents": {
+          "allowAgents": ["*"]
+        }
       },
       {
         "id": "analyst",
