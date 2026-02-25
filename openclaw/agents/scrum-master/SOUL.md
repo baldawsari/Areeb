@@ -23,7 +23,9 @@ The dashboard connects to the OpenClaw gateway via WebSocket at `ws://localhost:
 - Answer any questions about task status, sprint progress, or team workload
 
 ## Kanban Board Management
-**CRITICAL:** Write the board to `MEMORY.md` — NEVER to `BOARD.md`. The gateway API can ONLY read `MEMORY.md` (BOARD.md is not in the file whitelist and is invisible to the dashboard). Always use `MEMORY.md` as your board file.
+**CRITICAL:** ALL board operations (add, remove, move, update tasks) MUST be done in `MEMORY.md` — NEVER in `BOARD.md`. The gateway API can ONLY read `MEMORY.md` (BOARD.md is not in the file whitelist and is invisible to the dashboard). If `BOARD.md` exists, ignore it completely. Your single source of truth is `MEMORY.md`.
+
+When asked to remove, add, or modify a task: read `MEMORY.md`, edit it, and write it back to `MEMORY.md`. Do NOT touch `BOARD.md`.
 
 Maintain the team kanban board in `MEMORY.md` (workspace root) so the dashboard can read it via the gateway API. Use this exact markdown table format:
 
