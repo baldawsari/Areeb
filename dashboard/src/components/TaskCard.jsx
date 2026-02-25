@@ -1,13 +1,14 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Clock, GripVertical, X, RefreshCw } from 'lucide-react';
+import { Clock, GripVertical, X, RefreshCw, Trash2 } from 'lucide-react';
 import { AGENT_MAP, PRIORITY_CONFIG } from '../lib/agents';
 import useStore from '../lib/store';
 
 export default function TaskCard({ task, overlay = false }) {
   const selectedTask = useStore((s) => s.selectedTask);
   const setSelectedTask = useStore((s) => s.setSelectedTask);
+  const dismissTask = useStore((s) => s.dismissTask);
   const agent = AGENT_MAP[task.agent];
   const priorityConfig = PRIORITY_CONFIG[task.priority];
 
@@ -82,6 +83,18 @@ export default function TaskCard({ task, overlay = false }) {
             isExpanded={isExpanded}
           />
         </div>
+        {task.source === 'agent' && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              dismissTask(task.id);
+            }}
+            className="mt-0.5 p-0.5 rounded text-surface-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            title="Dismiss synced task"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
       </div>
 
       {/* Expanded details */}

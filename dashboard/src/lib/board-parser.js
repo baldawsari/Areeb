@@ -172,12 +172,16 @@ export function parseBoard(markdown, agentId = 'scrum-master') {
  * Merge agent-sourced tasks with localStorage tasks.
  * Agent tasks replace any existing agent task with the same ID.
  * Local tasks (source !== 'agent') are preserved.
+ * @param {Array} localTasks - Existing tasks (local + previously synced agent tasks)
+ * @param {Array} agentTasks - Freshly parsed agent tasks
+ * @param {Set<string>} [dismissedIds] - Task IDs the user has dismissed
  */
-export function mergeTaskSources(localTasks, agentTasks) {
+export function mergeTaskSources(localTasks, agentTasks, dismissedIds) {
   const localOnly = localTasks.filter((t) => t.source !== 'agent');
-  // Deduplicate agent tasks by ID
+  // Deduplicate agent tasks by ID, filtering out dismissed ones
   const agentMap = new Map();
   for (const t of agentTasks) {
+    if (dismissedIds && dismissedIds.has(t.id)) continue;
     agentMap.set(t.id, t);
   }
   return [...localOnly, ...agentMap.values()];

@@ -5,6 +5,7 @@ import { parseBoard, mergeTaskSources } from './board-parser';
 
 // --- localStorage persistence for tasks ---
 const TASKS_STORAGE_KEY = 'areeb-dashboard-tasks';
+const DISMISSED_STORAGE_KEY = 'areeb-dashboard-dismissed';
 
 // --- Agent workspace file polling ---
 const BOARD_POLL_INTERVAL_MS = 60_000; // poll every 60s
@@ -29,6 +30,23 @@ function saveTasks(tasks) {
   } catch {}
 }
 
+function loadDismissed() {
+  try {
+    const raw = localStorage.getItem(DISMISSED_STORAGE_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr);
+    }
+  } catch {}
+  return new Set();
+}
+
+function saveDismissed(dismissedSet) {
+  try {
+    localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify([...dismissedSet]));
+  } catch {}
+}
+
 // Build initial agent state from static AGENTS list
 const initialAgents = AGENTS.map((agent) => ({
   ...agent,
@@ -49,6 +67,7 @@ const useStore = create((set, get) => ({
   // Data
   agents: initialAgents,
   tasks: loadTasks(),
+  dismissedTaskIds: loadDismissed(),
   messages: [],
   filterAgent: null,
   filterWorkflow: null,
@@ -310,7 +329,7 @@ const useStore = create((set, get) => ({
 
     if (allAgentTasks.length > 0) {
       set((state) => {
-        const merged = mergeTaskSources(state.tasks, allAgentTasks);
+        const merged = mergeTaskSources(state.tasks, allAgentTasks, state.dismissedTaskIds);
         saveTasks(merged);
         return { tasks: merged };
       });
@@ -435,6 +454,29 @@ const useStore = create((set, get) => ({
       saveTasks(tasks);
       return { tasks };
     }),
+
+  dismissTask: (taskId) =>
+    set((state) => {
+      const dismissedTaskIds = new Set(state.dismissedTaskIds);
+      dismissedTaskIds.add(taskId);
+      saveDismissed(dismissedTaskIds);
+      const tasks = state.tasks.filter((t) => t.id !== taskId);
+      saveTasks(tasks);
+      return { tasks, dismissedTaskIds };
+    }),
+
+  restoreTask: (taskId) => {
+    set((state) => {
+      const dismissedTaskIds = new Set(state.dismissedTaskIds);
+      dismissedTaskIds.delete(taskId);
+      saveDismissed(dismissedTaskIds);
+      return { dismissedTaskIds };
+    });
+    // Re-fetch boards so the restored task reappears
+    if (gateway.hasScope('operator.read')) {
+      get().fetchAgentBoards();
+    }
+  },
 
   setSelectedTask: (taskId) => set({ selectedTask: taskId }),
 
