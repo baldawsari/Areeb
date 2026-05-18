@@ -13,13 +13,14 @@ import {
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import TaskCard from './TaskCard';
-import useStore from '../lib/store';
+import useStore, { matchesSearch } from '../lib/store';
 import { COLUMNS } from '../lib/agents';
 
 export default function KanbanBoard() {
   const tasks = useStore((s) => s.tasks);
   const filterAgent = useStore((s) => s.filterAgent);
   const filterWorkflow = useStore((s) => s.filterWorkflow);
+  const searchQuery = useStore((s) => s.searchQuery);
   const moveTask = useStore((s) => s.moveTask);
   const [activeTask, setActiveTask] = React.useState(null);
 
@@ -35,6 +36,7 @@ export default function KanbanBoard() {
     let filtered = tasks.filter((t) => t.status === columnId);
     if (filterAgent) filtered = filtered.filter((t) => t.agent === filterAgent);
     if (filterWorkflow) filtered = filtered.filter((t) => t.workflow === filterWorkflow);
+    if (searchQuery) filtered = filtered.filter((t) => matchesSearch(t, searchQuery));
     return filtered;
   };
 

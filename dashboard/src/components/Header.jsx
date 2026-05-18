@@ -1,8 +1,9 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Menu, Bell, Activity, Search, Wifi, WifiOff, Loader2, Shield, ShieldCheck } from 'lucide-react';
+import { Menu, Bell, Activity, Search, Wifi, WifiOff, Loader2, Shield, ShieldCheck, X } from 'lucide-react';
 import useStore from '../lib/store';
 import gateway from '../lib/gateway';
+import { getGatewaySettings } from '../lib/settings';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard' },
@@ -26,12 +27,13 @@ export default function Header({ onToggleSidebar }) {
   const connectionStatus = useStore((s) => s.connectionStatus);
   const connectGateway = useStore((s) => s.connectGateway);
   const disconnectGateway = useStore((s) => s.disconnectGateway);
+  const searchQuery = useStore((s) => s.searchQuery);
+  const setSearchQuery = useStore((s) => s.setSearchQuery);
   const [showNotifications, setShowNotifications] = React.useState(false);
 
-  // Auto-connect on mount
+  // Auto-connect on mount if a gateway token is configured (env var or Settings page).
   React.useEffect(() => {
-    const url = import.meta.env.VITE_GATEWAY_URL || 'ws://localhost:18789';
-    const token = import.meta.env.VITE_GATEWAY_TOKEN || '';
+    const { url, token } = getGatewaySettings();
     if (token) {
       connectGateway(url, token);
     }
@@ -87,8 +89,7 @@ export default function Header({ onToggleSidebar }) {
             if (connectionStatus === 'connected') {
               disconnectGateway();
             } else if (connectionStatus === 'disconnected' || connectionStatus === 'error') {
-              const url = import.meta.env.VITE_GATEWAY_URL || 'ws://localhost:18789';
-              const token = import.meta.env.VITE_GATEWAY_TOKEN || '';
+              const { url, token } = getGatewaySettings();
               connectGateway(url, token);
             }
           }}
@@ -128,8 +129,19 @@ export default function Header({ onToggleSidebar }) {
           <input
             type="text"
             placeholder="Search tasks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="bg-transparent text-sm text-white placeholder-surface-500 outline-none w-40"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-surface-500 hover:text-white"
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
 
         {connectionStatus === 'connected' && telegramStatus && (

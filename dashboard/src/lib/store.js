@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { AGENTS } from './agents';
 import gateway from './gateway';
 import { parseBoard, mergeTaskSources } from './board-parser';
+import { getSeedTasks } from './seed';
 
 // --- localStorage persistence for tasks ---
 const TASKS_STORAGE_KEY = 'areeb-dashboard-tasks';
@@ -16,10 +17,15 @@ const BOARD_FILE_NAME = 'MEMORY.md';
 function loadTasks() {
   try {
     const raw = localStorage.getItem(TASKS_STORAGE_KEY);
-    if (raw) {
-      const tasks = JSON.parse(raw);
-      if (Array.isArray(tasks)) return tasks.filter((t) => t.source === 'agent');
+    // First run: no stored tasks yet — seed a demo board so the app is usable
+    // immediately without a live gateway.
+    if (raw === null) {
+      const seeded = getSeedTasks();
+      saveTasks(seeded);
+      return seeded;
     }
+    const tasks = JSON.parse(raw);
+    if (Array.isArray(tasks)) return tasks;
   } catch {}
   return [];
 }
@@ -47,6 +53,17 @@ function saveDismissed(dismissedSet) {
   } catch {}
 }
 
+// Case-insensitive match against a task's title, description, and workflow.
+export function matchesSearch(task, query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    (task.title || '').toLowerCase().includes(q) ||
+    (task.description || '').toLowerCase().includes(q) ||
+    (task.workflow || '').toLowerCase().includes(q)
+  );
+}
+
 // Build initial agent state from static AGENTS list
 const initialAgents = AGENTS.map((agent) => ({
   ...agent,
@@ -71,6 +88,7 @@ const useStore = create((set, get) => ({
   messages: [],
   filterAgent: null,
   filterWorkflow: null,
+  searchQuery: '',
   selectedTask: null,
 
   // Gateway actions
@@ -417,7 +435,7 @@ const useStore = create((set, get) => ({
         ...state.tasks,
         {
           ...task,
-          id: `task-${Date.now()}`,
+          id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
@@ -487,7 +505,7 @@ const useStore = create((set, get) => ({
         ...state.messages,
         {
           ...message,
-          id: `msg-${Date.now()}`,
+          id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           timestamp: new Date().toISOString(),
         },
       ],
@@ -508,6 +526,8 @@ const useStore = create((set, get) => ({
   setFilterWorkflow: (workflow) =>
     set({ filterWorkflow: workflow === get().filterWorkflow ? null : workflow }),
 
+  setSearchQuery: (query) => set({ searchQuery: query }),
+
   clearFilters: () => set({ filterAgent: null, filterWorkflow: null }),
 
   // Derived data helpers
@@ -519,6 +539,9 @@ const useStore = create((set, get) => ({
     }
     if (state.filterWorkflow) {
       tasks = tasks.filter((t) => t.workflow === state.filterWorkflow);
+    }
+    if (state.searchQuery) {
+      tasks = tasks.filter((t) => matchesSearch(t, state.searchQuery));
     }
     return tasks;
   },
